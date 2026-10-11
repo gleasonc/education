@@ -1,0 +1,193 @@
+=================== root -l -b -q ex1_explore.C
+
+Processing ex1_explore.C...
+******************************************************************************
+*Tree    :pipneta__B4: pipneta__B4                                            *
+*Entries :  6091343 : Total =      1101939463 bytes  File  Size =  809502001 *
+*        :          : Tree compression factor =   1.36                       *
+******************************************************************************
+*Br    0 :accidweight : accidweight/D                                        *
+*Entries :  6091343 : Total  Size=   48978776 bytes  File Size  =    5212743 *
+*Baskets :     2359 : Basket Size=      32000 bytes  Compression=   9.39     *
+*............................................................................*
+*Br    1 :PiPlus_Px : PiPlus_Px/D                                            *
+*Entries :  6091343 : Total  Size=   48974050 bytes  File Size  =   46895248 *
+*Baskets :     2359 : Basket Size=      32000 bytes  Compression=   1.04     *
+*............................................................................*
+*Br    2 :PiPlus_Py : PiPlus_Py/D                                            *
+*Entries :  6091343 : Total  Size=   48974050 bytes  File Size  =   46895443 *
+*Baskets :     2359 : Basket Size=      32000 bytes  Compression=   1.04     *
+*............................................................................*
+*Br    3 :PiPlus_Pz : PiPlus_Pz/D                                            *
+*Entries :  6091343 : Total  Size=   48974050 bytes  File Size  =   46789869 *
+*Baskets :     2359 : Basket Size=      32000 bytes  Compression=   1.05     *
+*............................................................................*
+*Br    4 :PiPlus_E  : PiPlus_E/D                                             *
+*Entries :  6091343 : Total  Size=   48971687 bytes  File Size  =   46876760 *
+*Baskets :     2359 : Basket Size=      32000 bytes  Compression=   1.04     *
+*............................................................................*
+*Br    5 :Eta_Px    : Eta_Px/D                                               *
+*Entries :  6091343 : Total  Size=   48966961 bytes  File Size  =   46983610 *
+*Baskets :     2359 : Basket Size=      32000 bytes  Compression=   1.04     *
+*............................................................................*
+*Br    6 :Eta_Py    : Eta_Py/D                                               *
+*Entries :  6091343 : Total  Size=   48966961 bytes  File Size  =   46983329 *
+*Baskets :     2359 : Basket Size=      32000 bytes  Compression=   1.04     *
+*............................................................................*
+*Br    7 :Eta_Pz    : Eta_Pz/D                                               *
+*Entries :  6091343 : Total  Size=   48966961 bytes  File Size  =   46954283 *
+*Baskets :     2359 : Basket Size=      32000 bytes  Compression=   1.04     *
+*............................................................................*
+*Br    8 :Eta_E     : Eta_E/D                                                *
+*Entries :  6091343 : Total  Size=   48964499 bytes  File Size  =   46888159 *
+*Baskets :     2358 : Basket Size=      32000 bytes  Compression=   1.04     *
+*............................................................................*
+*Br    9 :Neutron_Px : Neutron_Px/D                                          *
+*Entries :  6091343 : Total  Size=   48976413 bytes  File Size  =   46960377 *
+*Baskets :     2359 : Basket Size=      32000 bytes  Compression=   1.04     *
+*............................................................................*
+*Br   10 :Neutron_Py : Neutron_Py/D                                          *
+*Entries :  6091343 : Total  Size=   48976413 bytes  File Size  =   46961480 *
+*Baskets :     2359 : Basket Size=      32000 bytes  Compression=   1.04     *
+*............................................................................*
+*Br   11 :Neutron_Pz : Neutron_Pz/D                                          *
+*Entries :  6091343 : Total  Size=   48976413 bytes  File Size  =   46310123 *
+*Baskets :     2359 : Basket Size=      32000 bytes  Compression=   1.06     *
+*............................................................................*
+*Br   12 :Neutron_E : Neutron_E/D                                            *
+*Entries :  6091343 : Total  Size=   48974050 bytes  File Size  =   45962863 *
+*Baskets :     2359 : Basket Size=      32000 bytes  Compression=   1.06     *
+*............................................................................*
+*Br   13 :Beam_Px   : Beam_Px/D                                              *
+*Entries :  6091343 : Total  Size=   48969324 bytes  File Size  =     479414 *
+*Baskets :     2359 : Basket Size=      32000 bytes  Compression= 102.05     *
+*............................................................................*
+*Br   14 :Beam_Py   : Beam_Py/D                                              *
+*Entries :  6091343 : Total  Size=   48969324 bytes  File Size  =     479414 *
+*Baskets :     2359 : Basket Size=      32000 bytes  Compression= 102.05     *
+*............................................................................*
+*Br   15 :Beam_Pz   : Beam_Pz/D                                              *
+*Entries :  6091343 : Total  Size=   48969324 bytes  File Size  =   13223194 *
+*Baskets :     2359 : Basket Size=      32000 bytes  Compression=   3.70     *
+*............................................................................*
+*Br   16 :Beam_E    : Beam_E/D                                               *
+*Entries :  6091343 : Total  Size=   48966961 bytes  File Size  =   13220835 *
+*Baskets :     2359 : Basket Size=      32000 bytes  Compression=   3.70     *
+*............................................................................*
+*Br   17 :Neutron_Beta : Neutron_Beta/D                                      *
+*Entries :  6091343 : Total  Size=   48981139 bytes  File Size  =   46290178 *
+*Baskets :     2359 : Basket Size=      32000 bytes  Compression=   1.06     *
+*............................................................................*
+*Br   18 :Mandelstam_t : Mandelstam_t/D                                      *
+*Entries :  6091343 : Total  Size=   48981139 bytes  File Size  =   46555404 *
+*Baskets :     2359 : Basket Size=      32000 bytes  Compression=   1.05     *
+*............................................................................*
+*Br   19 :Chi2_NDF  : Chi2_NDF/D                                             *
+*Entries :  6091343 : Total  Size=   48971687 bytes  File Size  =   28338744 *
+*Baskets :     2359 : Basket Size=      32000 bytes  Compression=   1.73     *
+*............................................................................*
+*Br   20 :MissingMassSquared : MissingMassSquared/D                          *
+*Entries :  6091343 : Total  Size=   48995317 bytes  File Size  =   46284234 *
+*Baskets :     2359 : Basket Size=      32000 bytes  Compression=   1.06     *
+*............................................................................*
+*Br   21 :pol       : pol/I                                                  *
+*Entries :  6091343 : Total  Size=   24518444 bytes  File Size  =     290002 *
+*Baskets :     1575 : Basket Size=      32000 bytes  Compression=  84.44     *
+*............................................................................*
+*Br   22 :deltaPhi  : deltaPhi/D                                             *
+*Entries :  6091343 : Total  Size=   48971687 bytes  File Size  =   47104687 *
+*Baskets :     2359 : Basket Size=      32000 bytes  Compression=   1.04     *
+*............................................................................*
+There are 6091343 entries.
+Entry 0   Beam_E = 10.6904   Chi2_NDF = 0.233056   Mandelstam_t = -0.640259   accidweight = 1   pol = -1
+Entry 1   Beam_E = 11.2899   Chi2_NDF = 2.97984   Mandelstam_t = -0.712973   accidweight = 1   pol = -1
+Entry 2   Beam_E = 9.72419   Chi2_NDF = 7.44872   Mandelstam_t = -0.535293   accidweight = -0.176443   pol = -1
+Entry 3   Beam_E = 8.72352   Chi2_NDF = 579.413   Mandelstam_t = -0.124948   accidweight = -0.176298   pol = -1
+Entry 4   Beam_E = 9.74468   Chi2_NDF = 512.892   Mandelstam_t = -0.0605377   accidweight = 1   pol = -1
+Info in <TCanvas::Print>: pdf file ex1_BeamE.pdf has been created
+Info in <TCanvas::Print>: png file ex1_BeamE.png has been created
+exit code: 0
+=================== root -l -b -q ex2_draw.C
+
+Processing ex2_draw.C...
+There are 6091343 entries.
+Info in <TCanvas::Print>: pdf file ex2_draw.pdf has been created
+Info in <TCanvas::Print>: png file ex2_draw.png has been created
+exit code: 0
+=================== root -l -b -q ex3_masses.C
+
+Processing ex3_masses.C...
+There are 6091343 entries.
+Info in <TCanvas::Print>: pdf file ex3_masses.pdf has been created
+Info in <TCanvas::Print>: png file ex3_masses.png has been created
+exit code: 0
+=================== root -l -b -q ex4_cuts.C
+
+Processing ex4_cuts.C...
+There are 6091343 entries.
+All entries:   6091343
+Pass chi2 cut: 699087
+Pass -t cut:   433403
+Pass MM2 cut:  362187
+Info in <TCanvas::Print>: pdf file ex4_cuts.pdf has been created
+Info in <TCanvas::Print>: png file ex4_cuts.png has been created
+exit code: 0
+=================== root -l -b -q ex5_2d.C
+
+Processing ex5_2d.C...
+There are 6091343 entries.
+Entries with 0 < -t < 0.5:   32873.1
+Entries with 0.5 < -t < 1.0: 43234.7
+Info in <TCanvas::Print>: pdf file ex5_2d.pdf has been created
+Info in <TCanvas::Print>: png file ex5_2d.png has been created
+exit code: 0
+=================== root -l -b -q ex6_fit.C
+
+Processing ex6_fit.C...
+There are 6091343 entries.
+ FCN=31.8606 FROM MIGRAD    STATUS=CONVERGED     177 CALLS         178 TOTAL
+                     EDM=6.91074e-07    STRATEGY= 1      ERROR MATRIX ACCURATE 
+  EXT PARAMETER                                   STEP         FIRST   
+  NO.   NAME      VALUE            ERROR          SIZE      DERIVATIVE 
+   1  Height       5.02009e+02   2.10103e+01   4.41790e-02   5.96619e-05
+   2  Mean         9.85690e-01   1.15176e-03   2.99902e-06  -2.83253e-01
+   3  Sigma        2.63574e-02   1.59596e-03   2.52291e-06   1.77678e-01
+   4  Bkg const   -2.80258e+02   9.06462e+01   1.66703e-02   1.52438e-05
+   5  Bkg slope    7.16337e+02   9.14510e+01   1.69187e-02   1.59384e-05
+Mean  = 0.98569 +/- 0.00115176 GeV
+Sigma = 0.0263574 +/- 0.00159596 GeV
+chi2/ndf = 31.8606 / 17
+Info in <TCanvas::Print>: pdf file ex6_fit.pdf has been created
+Info in <TCanvas::Print>: png file ex6_fit.png has been created
+exit code: 0
+=================== root -l -b -q MakePlots_EtaPiPlus.C
+
+Processing MakePlots_EtaPiPlus.C...
+There are 6091343 entries.
+Info in <TCanvas::Print>: pdf file ChiSqNDF.pdf has been created
+Info in <TCanvas::Print>: pdf file NeutronBeta.pdf has been created
+Info in <TCanvas::Print>: pdf file Masses.pdf has been created
+Info in <TCanvas::Print>: pdf file EtaPiPlusMass_Cuts.pdf has been created
+Info in <TCanvas::Print>: pdf file Masses2D.pdf has been created
+Entries (weighted) after cuts: 76107.8 in 0.7-2.5 GeV
+exit code: 0
+=================== root -l -b -q ex7_masses2d.C
+
+Processing ex7_masses2d.C...
+There are 6091343 entries.
+M(eta pi+) entries, standard cuts:  76107.8
+M(eta pi+) entries, + baryon veto:  40348.1
+Info in <TCanvas::Print>: pdf file ex7_masses2d.pdf has been created
+Info in <TCanvas::Print>: png file ex7_masses2d.png has been created
+Info in <TCanvas::Print>: pdf file ex7_veto.pdf has been created
+Info in <TCanvas::Print>: png file ex7_veto.png has been created
+exit code: 0
+=================== root -l -b -q ex8_gj_angles.C
+
+Processing ex8_gj_angles.C...
+There are 6091343 entries.
+a0 window entries: 8314.83
+a2 window entries: 8536
+Info in <TCanvas::Print>: pdf file ex8_gj_angles.pdf has been created
+Info in <TCanvas::Print>: png file ex8_gj_angles.png has been created
+exit code: 0

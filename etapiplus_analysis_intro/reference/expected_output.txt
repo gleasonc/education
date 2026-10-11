@@ -1,0 +1,264 @@
+=================== C++ (in tutorial/cpp): root -l -b -q ex1_explore.C
+
+Processing ex1_explore.C...
+
+=== Contents of the file ===
+TFile**		../../flat_pipneta__B4_v6.root	
+ TFile*		../../flat_pipneta__B4_v6.root	
+  KEY: TTree	pipneta__B4;1	pipneta__B4
+
+=== The tree ===
+Tree name:         pipneta__B4
+Number of entries: 6091343
+Number of branches: 23
+
+  accidweight/D
+  PiPlus_Px/D
+  PiPlus_Py/D
+  PiPlus_Pz/D
+  PiPlus_E/D
+  Eta_Px/D
+  Eta_Py/D
+  Eta_Pz/D
+  Eta_E/D
+  Neutron_Px/D
+  Neutron_Py/D
+  Neutron_Pz/D
+  Neutron_E/D
+  Beam_Px/D
+  Beam_Py/D
+  Beam_Pz/D
+  Beam_E/D
+  Neutron_Beta/D
+  Mandelstam_t/D
+  Chi2_NDF/D
+  MissingMassSquared/D
+  pol/I
+  deltaPhi/D
+
+=== First 5 entries ===
+******************************************************************************************************
+*    Row   *       Beam_E *     Chi2_NDF * Mandelstam_t * MissingMassS *  accidweight *          pol *
+******************************************************************************************************
+*        0 * 10.690353393 * 0.2330557405 * -0.640258725 * -0.002254071 *            1 *           -1 *
+*        1 * 11.289943695 * 2.9798440933 * -0.712973281 * -0.009762627 *            1 *           -1 *
+*        2 * 9.7241859436 * 7.4487218856 * -0.535292579 * 0.0098450618 * -0.176443333 *           -1 *
+*        3 * 8.7235221862 * 579.41345214 * -0.124948067 * 0.0630662844 * -0.176298333 *           -1 *
+*        4 * 9.7446832656 * 512.89221191 * -0.060537701 * 0.0581411850 *            1 *           -1 *
+******************************************************************************************************
+
+=== Counting with conditions ===
+accidweight == 1 (in-time beam photon): 1763934
+accidweight <  0 (out-of-time photon):  4327409
+Chi2_NDF < 10:                          699087
+
+Entries for each value of pol:
+  pol = -1: 507440
+  pol = 0: 1390581
+  pol = 45: 1365837
+  pol = 90: 1439007
+  pol = 135: 1388478
+exit code: 0
+=================== C++ (in tutorial/cpp): root -l -b -q ex2_draw.C
+
+Processing ex2_draw.C...
+Entries in hBeam:    6091343
+Entries in hChi2All: 6091343  (inside 0-50: 1629202)
+Entries in hChi2Cut: 699087
+Info in <TCanvas::Print>: png file plots/cpp_ex2_draw.png has been created
+exit code: 0
+=================== C++ (in tutorial/cpp): root -l -b -q ex3_cutflow.C
+
+Processing ex3_cutflow.C...
+Looping over 6091343 entries...
+  entry 0
+  entry 1000000
+  entry 2000000
+  entry 3000000
+  entry 4000000
+  entry 5000000
+  entry 6000000
+
+Step                           Entries    % kept      Weighted
+All entries                    6091343    100.0%        930757
+Chi2_NDF cut                    699087     11.5%        177950
+-t cut                          433403      7.1%        109496
+|MM2| cut                       362187      5.9%         98492
+
+Weighted entries in the mass plot: 76108
+Info in <TCanvas::Print>: png file plots/cpp_ex3_cutflow.png has been created
+exit code: 0
+=================== C++ (in tutorial/cpp): root -l -b -q ex4_compare.C
+
+Processing ex4_compare.C...
+Weighted sum, no cut:              688928
+Weighted sum, chi2/ndf < 10:       119942
+Fraction kept by the cut:          0.1741
+Prompt entries (chi2/ndf < 10):    176715
+Accidental estimate:               56772.6
+Prompt - accidental:               119942
+Info in <TCanvas::Print>: png file plots/cpp_ex4_compare.png has been created
+exit code: 0
+=================== C++ (in tutorial/cpp): root -l -b -q ex5_2d.C
+
+Processing ex5_2d.C...
+Weighted entries in the 2D plot:     104480
+Weighted entries with 0 < -t < 0.5:   32873.1
+Weighted entries with 0.5 < -t < 1.0: 43234.7
+Info in <TCanvas::Print>: png file plots/cpp_ex5_2d.png has been created
+exit code: 0
+=================== C++ (in tutorial/cpp): root -l -b -q ex6_fit.C
+
+Processing ex6_fit.C...
+ FCN=31.8605 FROM MIGRAD    STATUS=CONVERGED     156 CALLS         157 TOTAL
+                     EDM=1.97166e-09    STRATEGY= 1  ERROR MATRIX UNCERTAINTY   1.4 per cent
+  EXT PARAMETER                                   STEP         FIRST   
+  NO.   NAME      VALUE            ERROR          SIZE      DERIVATIVE 
+   1  Amplitude    5.01998e+02   2.09699e+01  -3.47435e-02   2.02200e-06
+   2  Mean         9.85690e-01   1.14385e-03  -1.51171e-07   3.21759e-02
+   3  Sigma        2.63577e-02   1.57033e-03   5.33205e-06   1.32011e-03
+   4  Bkg const   -2.80248e+02   9.01821e+01   2.00926e-02  -4.41440e-06
+   5  Bkg slope    7.16328e+02   9.09179e+01  -1.07988e-02  -3.95767e-06
+
+===== Summary =====
+Mean     = 985.69 +/- 1.14385 MeV
+Sigma    = 26.3577 +/- 1.57033 MeV
+chi2/ndf = 31.8605 / 17  (p-value 0.0156595)
+Signal yield ~ 3316.65 (weighted entries)
+Info in <TCanvas::Print>: png file plots/cpp_ex6_fit.png has been created
+exit code: 0
+=================== C++ (in tutorial/cpp): root -l -b -q ex7_masses2d.C
+
+Processing ex7_masses2d.C...
+Looping over 6091343 entries...
+Weighted entries in the Dalitz plot:          96168.3
+M(eta pi+) 0.7-2.5 GeV, standard cuts:        76107.8
+M(eta pi+) 0.7-2.5 GeV, plus baryon veto:     40348.1
+Fraction kept by the veto:                    0.530144
+Info in <TCanvas::Print>: png file plots/cpp_ex7_masses2d.png has been created
+Info in <TCanvas::Print>: png file plots/cpp_ex7_veto.png has been created
+exit code: 0
+=================== C++ (in tutorial/cpp): root -l -b -q ex8_gj_angles.C
+
+Processing ex8_gj_angles.C...
+Looping over 6091343 entries...
+Entries used:                    362187
+cos(theta_GJ) range:             -0.999507 to 0.999979
+phi_GJ range (deg):              -179.998 to 179.999
+Max |cos - cross-check|:         1.248e-12
+Weighted entries, all masses:    98492.2
+Weighted entries, a0 window:     8314.83  (mean cos = -0.0508043)
+Weighted entries, a2 window:     8535.99  (mean cos = -0.0745699)
+Info in <TCanvas::Print>: png file plots/cpp_ex8_gj_angles.png has been created
+exit code: 0
+=================== Python (in tutorial/): python python/ex1_explore.py
+=== Contents of the file ===
+{'pipneta__B4;1': 'TTree'}
+
+=== The tree ===
+Tree name:          pipneta__B4
+Number of entries:  6091343
+Number of branches: 23 
+
+  accidweight          double
+  PiPlus_Px            double
+  PiPlus_Py            double
+  PiPlus_Pz            double
+  PiPlus_E             double
+  Eta_Px               double
+  Eta_Py               double
+  Eta_Pz               double
+  Eta_E                double
+  Neutron_Px           double
+  Neutron_Py           double
+  Neutron_Pz           double
+  Neutron_E            double
+  Beam_Px              double
+  Beam_Py              double
+  Beam_Pz              double
+  Beam_E               double
+  Neutron_Beta         double
+  Mandelstam_t         double
+  Chi2_NDF             double
+  MissingMassSquared   double
+  pol                  int32_t
+  deltaPhi             double
+
+=== First 5 entries ===
+Row         Beam_E      Chi2_NDF  Mandelstam_t  MissingMassS   accidweight           pol
+  0        10.6904      0.233056     -0.640259   -0.00225407             1            -1
+  1        11.2899       2.97984     -0.712973   -0.00976263             1            -1
+  2        9.72419       7.44872     -0.535293    0.00984506     -0.176443            -1
+  3        8.72352       579.413     -0.124948     0.0630663     -0.176298            -1
+  4        9.74468       512.892    -0.0605377     0.0581412             1            -1
+
+=== Counting with conditions ===
+accidweight == 1 (in-time beam photon): 1763934
+accidweight <  0 (out-of-time photon):  4327409
+Chi2_NDF < 10:                          699087
+
+Entries for each value of pol:
+  pol = -1: 507440
+  pol = 0: 1390581
+  pol = 45: 1365837
+  pol = 90: 1439007
+  pol = 135: 1388478
+exit code: 0
+=================== Python (in tutorial/): python python/ex2_draw.py
+Entries in hBeam:    6091343
+Entries in hChi2All: 6091343  (inside 0-50: 1629202)
+Entries in hChi2Cut: 699087
+Saved plots/py_ex2_draw.png
+exit code: 0
+=================== Python (in tutorial/): python python/ex3_cutflow.py
+Reading 6091343 entries...
+
+Step                           Entries    % kept      Weighted
+All entries                    6091343    100.0%        930757
+Chi2_NDF cut                    699087     11.5%        177950
+-t cut                          433403      7.1%        109496
+|MM2| cut                       362187      5.9%         98492
+
+Weighted entries in the mass plot: 76108
+Saved plots/py_ex3_cutflow.png
+exit code: 0
+=================== Python (in tutorial/): python python/ex4_compare.py
+Weighted sum, no cut:              688928
+Weighted sum, chi2/ndf < 10:       119942
+Fraction kept by the cut:          0.1741
+Prompt entries (chi2/ndf < 10):    176715
+Accidental estimate:               56772.6
+Prompt - accidental:               119942
+Saved plots/py_ex4_compare.png
+exit code: 0
+=================== Python (in tutorial/): python python/ex5_2d.py
+Weighted entries in the 2D plot:     104480
+Weighted entries with 0 < -t < 0.5:   32873.1
+Weighted entries with 0.5 < -t < 1.0: 43234.7
+Saved plots/py_ex5_2d.png
+exit code: 0
+=================== Python (in tutorial/): python python/ex6_fit.py
+===== Summary =====
+Mean     = 985.69 +/- 1.15 MeV
+Sigma    = 26.36 +/- 1.27 MeV
+chi2/ndf = 31.86 / 17  (p-value 0.0157)
+Signal yield ~ 3317 (weighted entries)
+Saved plots/py_ex6_fit.png
+exit code: 0
+=================== Python (in tutorial/): python python/ex7_masses2d.py
+Weighted entries in the Dalitz plot:          96168.3
+M(eta pi+) 0.7-2.5 GeV, standard cuts:        76107.8
+M(eta pi+) 0.7-2.5 GeV, plus baryon veto:     40348.1
+Fraction kept by the veto:                    0.5301
+Saved plots/py_ex7_masses2d.png and plots/py_ex7_veto.png
+exit code: 0
+=================== Python (in tutorial/): python python/ex8_gj_angles.py
+Entries used:                    362187
+cos(theta_GJ) range:             -0.999507 to 0.999979
+phi_GJ range (deg):              -179.998 to 179.999
+Max |cos - cross-check|:         1.25e-12
+Weighted entries, all masses:    98492.2
+Weighted entries, a0 window:     8314.83  (mean cos = -0.0508)
+Weighted entries, a2 window:     8535.99  (mean cos = -0.0746)
+Saved plots/py_ex8_gj_angles.png
+exit code: 0
