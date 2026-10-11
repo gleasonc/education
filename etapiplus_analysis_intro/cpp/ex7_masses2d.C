@@ -19,7 +19,7 @@
 //   VERTICAL band. Where bands cross, the two can interfere.
 //
 // How to run it (in a terminal):
-//   cd tutorial/cpp
+//   cd etapiplus_analysis_intro/cpp
 //   root -l -b -q ex7_masses2d.C
 //
 // What you should see: printed weighted sums (see README) and two

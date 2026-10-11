@@ -14,7 +14,7 @@
 // (a "baryon veto", like in MakeFlat.C) and see what it does to M(eta pi+).
 //
 // HOW TO RUN:
-//     cd tutorial/cpp_beginner
+//     cd etapiplus_analysis_intro/cpp_beginner
 //     root -l ex7_masses2d.C
 //
 // WHAT YOU SHOULD SEE:

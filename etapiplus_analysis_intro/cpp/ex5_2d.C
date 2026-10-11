@@ -8,7 +8,7 @@
 //          for small -t and one for larger -t, drawn on top of each other.
 //
 // How to run it (in a terminal):
-//   cd tutorial/cpp
+//   cd etapiplus_analysis_intro/cpp
 //   root -l -b -q ex5_2d.C
 //
 // What you should see: the weighted sum in each slice printed (see

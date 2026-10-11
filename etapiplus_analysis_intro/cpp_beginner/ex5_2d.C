@@ -10,7 +10,7 @@
 //        blue = 0 < -t < 0.5 GeV^2, red = 0.5 < -t < 1.0 GeV^2.
 //
 // HOW TO RUN:
-//     cd tutorial/cpp_beginner
+//     cd etapiplus_analysis_intro/cpp_beginner
 //     root -l ex5_2d.C
 //
 // WHAT YOU SHOULD SEE:

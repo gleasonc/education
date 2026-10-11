@@ -6,7 +6,7 @@
 // (the background under it).
 //
 // HOW TO RUN:
-//     cd tutorial/cpp_beginner
+//     cd etapiplus_analysis_intro/cpp_beginner
 //     root -l ex6_fit.C
 //
 // WHAT YOU SHOULD SEE: a table of fit results from ROOT. The ones to

@@ -15,7 +15,7 @@ Once you can read one macro, you can read all of them. Each one adds a little to
 ## How to run
 
 ```bash
-cd tutorial/cpp_beginner
+cd etapiplus_analysis_intro/cpp_beginner
 root -l ex1_explore.C
 ```
 

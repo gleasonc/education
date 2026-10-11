@@ -30,7 +30,7 @@
 // between eta and beam. The two must agree for every entry.
 //
 // How to run it (in a terminal):
-//   cd tutorial/cpp
+//   cd etapiplus_analysis_intro/cpp
 //   root -l -b -q ex8_gj_angles.C
 //
 // What you should see: printed checks and sums (see README) and

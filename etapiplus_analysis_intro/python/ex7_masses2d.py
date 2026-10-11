@@ -11,7 +11,7 @@ and M(eta pi+) with and without a baryon veto (M(pi+ n) > 2 and M(eta n) > 2 GeV
 Mesons decaying to eta pi+ make HORIZONTAL bands (M(eta pi+) is on y);
 baryons decaying to pi+ n or eta n make VERTICAL bands.
 
-Run from the tutorial/ folder:
+Run from the etapiplus_analysis_intro/ folder:
     python python/ex7_masses2d.py
 Output: sums in the terminal, plots/py_ex7_masses2d.png and plots/py_ex7_veto.png
 """

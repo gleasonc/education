@@ -25,7 +25,7 @@
 //        phi_GJ   = angle around the z axis, starting from the x axis
 //
 // HOW TO RUN:
-//     cd tutorial/cpp_beginner
+//     cd etapiplus_analysis_intro/cpp_beginner
 //     root -l ex8_gj_angles.C
 //
 // WHAT YOU SHOULD SEE: four plots saved as ex8_gj_angles.pdf (and .png):

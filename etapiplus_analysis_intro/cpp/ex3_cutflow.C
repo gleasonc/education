@@ -11,7 +11,7 @@
 //      weighted by "accidweight" to subtract accidental beam photons.
 //
 // How to run it (in a terminal):
-//   cd tutorial/cpp
+//   cd etapiplus_analysis_intro/cpp
 //   root -l -b -q ex3_cutflow.C
 // It reads all 6 million entries, so give it 10 to 30 seconds.
 //

@@ -9,7 +9,7 @@
 //   3. Prints the fitted mass, width, fit quality and signal yield.
 //
 // How to run it (in a terminal):
-//   cd tutorial/cpp
+//   cd etapiplus_analysis_intro/cpp
 //   root -l -b -q ex6_fit.C
 // To change the fit range (here 0.88 to 1.10 GeV), pass it in:
 //   root -l -b -q 'ex6_fit.C("../../flat_pipneta__B4_v6.root", 0.85, 1.15)'

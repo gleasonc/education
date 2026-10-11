@@ -4,7 +4,7 @@ Opens the ROOT file with uproot, lists what is in it, prints every branch
 (column) of the tree with its type, shows the first 5 entries and counts
 entries that pass a few conditions. No plots in this exercise.
 
-Run from the tutorial/ folder:
+Run from the etapiplus_analysis_intro/ folder:
     python python/ex1_explore.py
     python python/ex1_explore.py /path/to/flat_pipneta__B4_v6.root
 """

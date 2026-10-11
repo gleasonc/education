@@ -10,7 +10,7 @@ Same steps as cpp/ex8_gj_angles.C (and the group's MakeFlat.C):
 Cross-check: cos(theta_GJ) again, boosting straight from the lab to the
 eta pi+ rest frame and taking the angle between eta and beam.
 
-Run from the tutorial/ folder:
+Run from the etapiplus_analysis_intro/ folder:
     python python/ex8_gj_angles.py
 Output: checks and sums in the terminal and plots/py_ex8_gj_angles.png
 """

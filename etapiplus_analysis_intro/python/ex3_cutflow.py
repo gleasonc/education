@@ -5,7 +5,7 @@ columns at once: a comparison such as  chi2 < 10  gives an array of
 True/False, one per entry, and we combine those with  &  ("and").
 numpy does the loop for us (and much faster).
 
-Run from the tutorial/ folder:
+Run from the etapiplus_analysis_intro/ folder:
     python python/ex3_cutflow.py
 Output: a cut-flow table in the terminal and plots/py_ex3_cutflow.png
 

@@ -6,7 +6,7 @@
 // histograms in one loop, then draw them all at the end.
 //
 // HOW TO RUN:
-//     cd tutorial/cpp_beginner
+//     cd etapiplus_analysis_intro/cpp_beginner
 //     root -l -b -q MakePlots_EtaPiPlus.C
 //
 // WHAT YOU SHOULD SEE: progress messages, then five PDF files in this

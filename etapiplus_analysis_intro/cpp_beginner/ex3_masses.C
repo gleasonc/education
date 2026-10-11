@@ -12,7 +12,7 @@
 //     M(pi+ n)      peaks: Delta(1232)?
 //
 // HOW TO RUN:
-//     cd tutorial/cpp_beginner
+//     cd etapiplus_analysis_intro/cpp_beginner
 //     root -l ex3_masses.C
 //
 // WHAT YOU SHOULD SEE: three mass plots side by side, saved as

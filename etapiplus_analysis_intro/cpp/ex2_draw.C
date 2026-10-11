@@ -10,7 +10,7 @@
 //   Every plot gets a title and labelled axes with units.
 //
 // How to run it (in a terminal):
-//   cd tutorial/cpp
+//   cd etapiplus_analysis_intro/cpp
 //   root -l -b -q ex2_draw.C
 //
 // What you should see:

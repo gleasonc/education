@@ -7,8 +7,6 @@ It fills the Tuesday and Thursday slots of the bootcamp week in the *GlueX New M
 **Done when you can:** make a labelled histogram from a tree you have not seen before, apply a cut of your own and say what it did, and fit a peak and explain what the numbers mean.
 
 > **New to programming?** Start with the macros in [`cpp_beginner/`](cpp_beginner/README.md). They do the same analysis in the plainer style of the group's own macros (like `MakeFlat.C`): one variable per branch, one event loop, cuts written as `if (...) continue;`. The macros in `cpp/` are more compact and use a few more ROOT shortcuts.
->
-> An earlier version of this tutorial, built on the histogram-only file `etapipmissn__U1.root`, is kept in `old_etapipmissn_U1/`.
 
 ---
 
@@ -77,33 +75,36 @@ The Python scripts read the columns they need into memory, about 0.6 GB for the 
 ### Folder layout
 
 ```
-UndergraduateResearch/
-├── flat_pipneta__B4_v6.root  <- the data file
-└── tutorial/                 <- run Python from here, C++ from tutorial/cpp/
-    ├── README.md             <- this guide
-    ├── tutorial.ipynb        <- Python exercises as a notebook
+education/
+├── flat_pipneta__B4_v6.root      <- the data file (you add this; see below)
+└── etapiplus_analysis_intro/     <- run Python from here, C++ from etapiplus_analysis_intro/cpp/
+    ├── README.md                 <- this guide
+    ├── tutorial.ipynb            <- Python exercises as a notebook
     ├── cpp/ex1_explore.C ... ex8_gj_angles.C
-    ├── cpp_beginner/         <- the same analysis in a plainer style (has its own README)
+    ├── cpp_beginner/             <- the same analysis in a plainer style (has its own README)
     ├── python/ex1_explore.py ... ex8_gj_angles.py
-    ├── reference/            <- the plots and printout you should get
-    └── old_etapipmissn_U1/   <- earlier version (histogram-only file)
+    └── reference/                <- the plots and printout you should get
 ```
 
-Open a terminal and go to the tutorial folder (C++ users then go one level further, into `cpp/`):
+### Getting the data
+
+The data file `flat_pipneta__B4_v6.root` (about 810 MB) is **not in this repository**; ask your mentor for a copy. Put it in the folder that contains `etapiplus_analysis_intro/` (two levels above `cpp/`), as in the layout above. That is where every macro, script and the notebook look for it.
+
+Then open a terminal and go to the tutorial folder (C++ users then go one level further, into `cpp/`):
 
 ```bash
-cd UndergraduateResearch/tutorial
+cd education/etapiplus_analysis_intro
 ```
 
-Run the **C++ macros from inside `tutorial/cpp/`** (and the beginner macros from inside `tutorial/cpp_beginner/`), and the **Python scripts from `tutorial/`**. Each script finds the data file relative to where it is run, as in the table below. If your copy is somewhere else, pass the path as an argument. Plots are written to a new `plots/` folder.
+Run the **C++ macros from inside `etapiplus_analysis_intro/cpp/`** (and the beginner macros from inside `etapiplus_analysis_intro/cpp_beginner/`), and the **Python scripts from `etapiplus_analysis_intro/`**. Each script finds the data file relative to where it is run, as in the table below. If your copy is somewhere else, pass the path as an argument. Plots are written to a new `plots/` folder.
 
 | | C++ (ROOT) | Python |
 |---|---|---|
-| Run from | `tutorial/cpp/` | `tutorial/` |
+| Run from | `etapiplus_analysis_intro/cpp/` | `etapiplus_analysis_intro/` |
 | Run exercise N | `root -l -b -q exN_name.C` | `python python/exN_name.py` |
 | Use another file | `root -l -b -q 'exN_name.C("/path/file.root")'` | `python python/exN_name.py /path/file.root` |
 | Data file it looks for | `../../flat_pipneta__B4_v6.root` | `../flat_pipneta__B4_v6.root` |
-| Plots saved to | `tutorial/cpp/plots/` | `tutorial/plots/` |
+| Plots saved to | `etapiplus_analysis_intro/cpp/plots/` | `etapiplus_analysis_intro/plots/` |
 
 `-l` skips the splash screen, `-b` runs without opening windows, and `-q` quits when the macro ends. Leave out `-b -q` to see the plots on screen. Each C++ macro defines one function with the same name as the file (`ex1_explore.C` defines `ex1_explore`), which is the function ROOT runs.
 
@@ -116,12 +117,12 @@ Try the C++ and the Python version of each exercise and check that they print th
 ## Exercise 1: What is inside the file?
 
 ```bash
-cd tutorial/cpp            # C++: run from inside cpp/
+cd etapiplus_analysis_intro/cpp   # C++: run from inside cpp/
 root -l -b -q ex1_explore.C
 ```
 
 ```bash
-cd tutorial                # Python: run from tutorial/
+cd etapiplus_analysis_intro   # Python: run from etapiplus_analysis_intro/
 python python/ex1_explore.py
 ```
 
@@ -143,12 +144,12 @@ The script lists the file contents, the 23 branches with their types, the first 
 ## Exercise 2: Draw labelled histograms
 
 ```bash
-cd tutorial/cpp            # C++: run from inside cpp/
+cd etapiplus_analysis_intro/cpp   # C++: run from inside cpp/
 root -l -b -q ex2_draw.C
 ```
 
 ```bash
-cd tutorial                # Python: run from tutorial/
+cd etapiplus_analysis_intro   # Python: run from etapiplus_analysis_intro/
 python python/ex2_draw.py
 ```
 
@@ -174,12 +175,12 @@ tree->Draw("Beam_E>>hBeam", "cut", "goff");   // fill histogram hBeam with Beam_
 ## Exercise 3: Your own cuts and a cut flow
 
 ```bash
-cd tutorial/cpp            # C++: run from inside cpp/
+cd etapiplus_analysis_intro/cpp   # C++: run from inside cpp/
 root -l -b -q ex3_cutflow.C
 ```
 
 ```bash
-cd tutorial                # Python: run from tutorial/
+cd etapiplus_analysis_intro   # Python: run from etapiplus_analysis_intro/
 python python/ex3_cutflow.py
 ```
 
@@ -213,12 +214,12 @@ The cuts are `Chi2_NDF < 10`, `−t < 1.0 GeV²` and `|MissingMassSquared| < 0.0
 ## Exercise 4: What does a cut do? And what are accidentals?
 
 ```bash
-cd tutorial/cpp            # C++: run from inside cpp/
+cd etapiplus_analysis_intro/cpp   # C++: run from inside cpp/
 root -l -b -q ex4_compare.C
 ```
 
 ```bash
-cd tutorial                # Python: run from tutorial/
+cd etapiplus_analysis_intro   # Python: run from etapiplus_analysis_intro/
 python python/ex4_compare.py
 ```
 
@@ -251,12 +252,12 @@ This macro introduces two `TTree::Draw` tricks: `tree->SetAlias("M_etapi", "sqrt
 ## Exercise 5: A 2D plot and its projections
 
 ```bash
-cd tutorial/cpp            # C++: run from inside cpp/
+cd etapiplus_analysis_intro/cpp   # C++: run from inside cpp/
 root -l -b -q ex5_2d.C
 ```
 
 ```bash
-cd tutorial                # Python: run from tutorial/
+cd etapiplus_analysis_intro   # Python: run from etapiplus_analysis_intro/
 python python/ex5_2d.py
 ```
 
@@ -278,12 +279,12 @@ Left: a 2D histogram of M(ηπ⁺) (x) against −t (y), with the χ² and missi
 ## Exercise 6: Fit the a₀(980) peak
 
 ```bash
-cd tutorial/cpp            # C++: run from inside cpp/
+cd etapiplus_analysis_intro/cpp   # C++: run from inside cpp/
 root -l -b -q ex6_fit.C
 ```
 
 ```bash
-cd tutorial                # Python: run from tutorial/
+cd etapiplus_analysis_intro   # Python: run from etapiplus_analysis_intro/
 python python/ex6_fit.py
 ```
 
@@ -316,12 +317,12 @@ The fitted values agree. The uncertainty on σ differs slightly because MINUIT a
 ## Exercise 7: Two-dimensional mass plots
 
 ```bash
-cd tutorial/cpp            # C++: run from inside cpp/
+cd etapiplus_analysis_intro/cpp   # C++: run from inside cpp/
 root -l -b -q ex7_masses2d.C
 ```
 
 ```bash
-cd tutorial                # Python: run from tutorial/
+cd etapiplus_analysis_intro   # Python: run from etapiplus_analysis_intro/
 python python/ex7_masses2d.py
 ```
 
@@ -352,12 +353,12 @@ Fraction kept by the veto:                    0.5301
 ## Exercise 8: Gottfried-Jackson angles
 
 ```bash
-cd tutorial/cpp            # C++: run from inside cpp/
+cd etapiplus_analysis_intro/cpp   # C++: run from inside cpp/
 root -l -b -q ex8_gj_angles.C
 ```
 
 ```bash
-cd tutorial                # Python: run from tutorial/
+cd etapiplus_analysis_intro   # Python: run from etapiplus_analysis_intro/
 python python/ex8_gj_angles.py
 ```
 
@@ -413,7 +414,7 @@ Real analysis files have rough edges. These are facts about this file worth aski
 
 - **Fixed masses.** The η mass is exactly 0.5479 GeV and the neutron mass exactly 0.9396 GeV in every entry. The four-momenta are the kinematic-fit output with those masses constrained, so plotting the η or neutron mass tells you nothing.
 - **Pre-applied cuts.** `MissingMassSquared` stops sharply at ±0.1 GeV², `Neutron_Beta` at 0.9, and `Beam_E` starts at 8.2 GeV. These cuts were applied when the tree was made.
-- **Missing mass² peaks at 0**, not at the neutron mass² (0.883 GeV²). That suggests the neutron was measured (it also has a `Neutron_Beta`) and the missing mass is for the whole reaction. The older file in `old_etapipmissn_U1/` treated the neutron as missing.
+- **Missing mass² peaks at 0**, not at the neutron mass² (0.883 GeV²). That suggests the neutron was measured (it also has a `Neutron_Beta`) and the missing mass is for the whole reaction.
 - **`Chi2_NDF` is very large for most entries:** median 210, mean 486, and 16% above 1,000. Check whether this branch is really χ² per degree of freedom.
 - **Accidental weights.** Out-of-time weights run from −1/6 (−0.167) to −0.283, not one fixed value, and there are 2.45 out-of-time entries per in-time one. Ask how many beam bunches were used (`B4` in the name) and whether a scale factor is included.
 - **`deltaPhi` runs from −360° to +360°**, so it is the difference of two angles without wrapping into ±180°. Values near ±360° are actually close to 0°.

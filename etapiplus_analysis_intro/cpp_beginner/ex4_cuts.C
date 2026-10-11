@@ -6,7 +6,7 @@
 // and once after. Both are drawn on one plot.
 //
 // HOW TO RUN:
-//     cd tutorial/cpp_beginner
+//     cd etapiplus_analysis_intro/cpp_beginner
 //     root -l ex4_cuts.C
 //
 // WHAT YOU SHOULD SEE:

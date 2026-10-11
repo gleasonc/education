@@ -13,7 +13,7 @@
 // TTree::Draw.
 //
 // How to run it (in a terminal):
-//   cd tutorial/cpp
+//   cd etapiplus_analysis_intro/cpp
 //   root -l -b -q ex4_compare.C
 //
 // What you should see: printed sums for each curve (see README) and a

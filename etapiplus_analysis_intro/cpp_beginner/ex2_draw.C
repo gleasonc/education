@@ -9,7 +9,7 @@
 //     5. draw the histograms and save a picture
 //
 // HOW TO RUN:
-//     cd tutorial/cpp_beginner
+//     cd etapiplus_analysis_intro/cpp_beginner
 //     root -l ex2_draw.C
 //
 // WHAT YOU SHOULD SEE:

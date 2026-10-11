@@ -2,7 +2,7 @@
 // Beginner exercise 1: What is inside the file?
 //
 // HOW TO RUN (in a terminal):
-//     cd tutorial/cpp_beginner
+//     cd etapiplus_analysis_intro/cpp_beginner
 //     root -l ex1_explore.C
 // Type .q and press Enter to quit ROOT when it finishes.
 //

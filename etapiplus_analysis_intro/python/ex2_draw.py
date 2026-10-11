@@ -3,7 +3,7 @@
 Left: the photon beam energy. Right: the kinematic-fit chi2/ndf for all
 entries and for entries with Chi2_NDF < 10 (log y-axis).
 
-Run from the tutorial/ folder:
+Run from the etapiplus_analysis_intro/ folder:
     python python/ex2_draw.py
 Output: a few counts in the terminal and plots/py_ex2_draw.png
 """

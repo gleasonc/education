@@ -5,7 +5,7 @@ Left:  eta pi+ mass with no cut and with Chi2_NDF < 10, each scaled to
 Right: after the chi2 cut: in-time (prompt) photons, the accidental
        estimate from out-of-time photons, and prompt minus accidental.
 
-Run from the tutorial/ folder:
+Run from the etapiplus_analysis_intro/ folder:
     python python/ex4_compare.py
 Output: sums in the terminal and plots/py_ex4_compare.png
 """

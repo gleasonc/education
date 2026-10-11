@@ -4,7 +4,7 @@ Makes the eta pi+ mass histogram with the cuts from exercise 3 (weighted by
 accidweight, 10 MeV bins) and fits the peak near 1 GeV with a Gaussian plus
 a straight-line background.
 
-Run from the tutorial/ folder:
+Run from the etapiplus_analysis_intro/ folder:
     python python/ex6_fit.py
     python python/ex6_fit.py ../flat_pipneta__B4_v6.root 0.85 1.15   # other fit range
 Output: fit results in the terminal and plots/py_ex6_fit.png

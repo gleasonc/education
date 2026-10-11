@@ -9,7 +9,7 @@
 //   5. Counts how many rows pass a few simple conditions.
 //
 // How to run it (in a terminal):
-//   cd tutorial/cpp
+//   cd etapiplus_analysis_intro/cpp
 //   root -l -b -q ex1_explore.C
 //
 // If your data file is somewhere else, give its path in quotes:

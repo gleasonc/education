@@ -4,7 +4,7 @@ Left:  2D histogram of the eta pi+ mass (x) against -t (y).
 Right: projections onto the mass axis for 0 < -t < 0.5 and 0.5 < -t < 1.0.
 Cuts: Chi2_NDF < 10 and |MissingMassSquared| < 0.05, weighted by accidweight.
 
-Run from the tutorial/ folder:
+Run from the etapiplus_analysis_intro/ folder:
     python python/ex5_2d.py
 Output: sums in the terminal and plots/py_ex5_2d.png
 """
