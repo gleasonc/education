@@ -752,6 +752,11 @@ def main():
                     + ([step_plotfit] if getattr(args, "plotfit", False) else [])}[args.step]
     if step_bin in steps and (not args.sample or not args.mass):
         sys.exit("bin needs --sample and --mass")
+    if step_bin in steps:
+        for name, rng in (("mass", args.mass), ("t", args.t)):
+            if rng and (rng[1] <= rng[0] or rng[2] < 1):
+                sys.exit(f"{name} = {rng[0]:g} {rng[1]:g} {rng[2]:g}: need LOW HIGH NBINS "
+                         f"with HIGH > LOW and NBINS >= 1")
     if step_bin in steps and args.t_log and (not args.t or args.t[0] <= 0):
         sys.exit("--t-log needs --t with LO > 0")
     if step_fit in steps and not args.cfg:
