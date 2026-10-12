@@ -20,13 +20,17 @@
 //   arguments: in, outBase, massLow, massHigh, nMass, tLow, tHigh, nT,
 //              tLog (logarithmic t bins), tree ("kin"), massIdx ("1,2")
 
+#include <algorithm>
 #include <cmath>
 #include <iostream>
 #include <sstream>
 #include <string>
 #include <vector>
 
+#include "TBranch.h"
 #include "TFile.h"
+#include "TLeaf.h"
+#include "TSystem.h"
 #include "TTree.h"
 #include "TLorentzVector.h"
 #include "TString.h"
@@ -47,6 +51,26 @@ void split_bins( const char* inName, const char* outBase,
     TFile in( inName );
     TTree* t = in.IsOpen() ? (TTree*)in.Get( treeName ) : nullptr;
     if( !t ){ std::cerr << "split_bins: no tree '" << treeName << "' in " << inName << std::endl; return; }
+
+    // the branches ROOTDataReader needs, with the types it expects
+    const char* need[]  = { "NumFinalState", "E_FinalState", "Px_FinalState", "Py_FinalState",
+                            "Pz_FinalState", "E_Beam", "Px_Beam", "Py_Beam", "Pz_Beam" };
+    const char* types[] = { "Int_t", "Float_t", "Float_t", "Float_t", "Float_t",
+                            "Float_t", "Float_t", "Float_t", "Float_t" };
+    for( int k = 0; k < 9; ++k ){
+        TBranch* br = t->GetBranch( need[k] );
+        TLeaf* lf = br ? br->GetLeaf( need[k] ) : nullptr;
+        if( !lf ){
+            std::cerr << "split_bins: ERROR: " << inName << " has no branch " << need[k]
+                      << " in tree '" << treeName << "' (not ROOTDataReader format)" << std::endl;
+            gSystem->Exit( 1 );
+        }
+        if( std::string( lf->GetTypeName() ) != types[k] ){
+            std::cerr << "split_bins: ERROR: branch " << need[k] << " in " << inName << " is "
+                      << lf->GetTypeName() << ", expected " << types[k] << std::endl;
+            gSystem->Exit( 1 );
+        }
+    }
 
     const int kMax = 32;
     Int_t nfs = 0;
@@ -74,20 +98,26 @@ void split_bins( const char* inName, const char* outBase,
     }
 
     double mStep = ( mHigh - mLow ) / nMass;
-    Long64_t n = t->GetEntries(), kept = 0;
+    Long64_t n = t->GetEntries(), kept = 0, outMass = 0, outT = 0, tooFew = 0;
+    double seenMlo = 1e30, seenMhi = -1e30, seenTlo = 1e30, seenThi = -1e30;
+    int maxIdx = 0;
+    for( int k : idx ) maxIdx = std::max( maxIdx, k );
     for( Long64_t e = 0; e < n; ++e ){
         t->GetEntry( e );
+        if( nfs <= maxIdx || nfs > kMax ){ ++tooFew; continue; }
         TLorentzVector X;
         for( int k : idx ) if( k < nfs ) X += TLorentzVector( Px[k], Py[k], Pz[k], E[k] );
         double m = X.M();
-        if( m < mLow || m >= mHigh ) continue;
+        double mt = -( TLorentzVector( pxB, pyB, pzB, eB ) - X ).M2();
+        seenMlo = std::min( seenMlo, m );   seenMhi = std::max( seenMhi, m );
+        seenTlo = std::min( seenTlo, mt );  seenThi = std::max( seenThi, mt );
+        if( m < mLow || m >= mHigh ){ ++outMass; continue; }
         int i = int( ( m - mLow ) / mStep );
         if( i >= nMass ) i = nMass - 1;
 
         int j = 0;
         if( useT ){
-            double mt = -( TLorentzVector( pxB, pyB, pzB, eB ) - X ).M2();
-            if( mt < tLow || mt >= tHigh ) continue;
+            if( mt < tLow || mt >= tHigh ){ ++outT; continue; }
             j = tLog ? int( std::log( mt / tLow ) / std::log( tHigh / tLow ) * nT )
                      : int( ( mt - tLow ) / ( tHigh - tLow ) * nT );
             if( j >= nT ) j = nT - 1;
@@ -104,4 +134,14 @@ void split_bins( const char* inName, const char* outBase,
     }
     std::cout << "split_bins: " << inName << ": kept " << kept << " of " << n
               << " events in " << nMass << " x " << nT << " bins" << std::endl;
+    std::cout << "  dropped: " << outMass << " outside the mass range, " << outT
+              << " outside the -t range, " << tooFew << " with too few final-state particles"
+              << " (NumFinalState <= " << maxIdx << ")" << std::endl;
+    if( n > tooFew )
+        std::cout << "  seen in the file: mass " << seenMlo << " to " << seenMhi
+                  << " GeV, -t " << seenTlo << " to " << seenThi << " GeV^2"
+                  << " (mass of final-state particles " << massIdx << ")" << std::endl;
+    if( kept == 0 && n > 0 )
+        std::cerr << "split_bins: WARNING: no events kept from " << inName
+                  << "; compare the ranges above with your mass and t binning" << std::endl;
 }

@@ -106,7 +106,10 @@ def n_events(path, tree="kin"):
     try:
         import uproot
         with uproot.open(path) as f:
-            return f[tree].num_entries if tree in f else 0
+            try:
+                return f[tree].num_entries
+            except KeyError:
+                return 0
     except Exception:
         return None
 
