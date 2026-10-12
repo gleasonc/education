@@ -109,6 +109,23 @@ created where you run the command.
 
 ## 5. Use-case examples
 
+**Generate a test sample with gen_amp.** `gen_EtaPiMinusDeltaLowerVertex_pol0.cfg`
+makes η′π⁻Δ⁺⁺ events with a P1+ wave (π₁ Breit-Wigner) and a D1+ wave (a₂(1320)),
+and with Δ⁺⁺ → pπ⁺ at the lower vertex. The trees come out in the order this
+fit expects. The `-f` option generates the matching flat sample (no physics) for MC:
+
+```tcsh
+gen_amp -c gen_EtaPiMinusDeltaLowerVertex_pol0.cfg -o gen_pol0.root  -l 1.1 -u 2.6 -n 100000 -a 8.0 -b 9.0
+gen_amp -c gen_EtaPiMinusDeltaLowerVertex_pol0.cfg -o gen_flat.root -l 1.1 -u 2.6 -n 500000 -a 8.0 -b 9.0 -f
+```
+
+`-l`/`-u` set the M(η′π⁻) range, `-n` the number of events and `-a`/`-b` the
+beam-energy range. To change the physics, edit the `initialize` lines; for
+example, set the negative-reflectivity waves to non-zero values. Fitting
+`gen_pol0.root` with the wave set `P1D1 = D1+ P1+` should then give back the
+input waves.
+
+
 **Fit the simulated `gen_pol0.root` as "data".** Here the flat sample serves
 as both generated and accepted MC, so the fit is a closure test:
 
@@ -184,6 +201,7 @@ This writes `out/gen_m<i>_t<j>.root`.
 | `run_all.csh` / `run_all.sh` | one command for everything (tcsh / bash) |
 | `amptools_auto.py` | the driver: bin → fit → gather → plot → plotfit |
 | `example_run.ini` | example settings; copy and edit |
+| `gen_EtaPiMinusDeltaLowerVertex_pol0.cfg` | gen_amp config for test samples (P1+ and D1+ waves, Δ⁺⁺ lower vertex) |
 | `fit_etaprpim_SPD_TEMPLATE.cfg` | AmpTools config template (S, P, D waves, both reflectivities, Δ⁺⁺ Breit-Wigner) |
 | `split_bins.C` | ROOT macro that splits trees into M(η′π⁻) × −t bins |
 | `convert_to_csv.py` | turns .fit files (or ROOT files) into CSV |
