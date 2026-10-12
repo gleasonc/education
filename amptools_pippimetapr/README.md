@@ -212,6 +212,12 @@ This writes `out/gen_m<i>_t<j>.root`.
 
 ## 7. Notes
 
+* **Empty bins are skipped.** A bin with no events in one of the samples
+  (for example the highest mass bins of `gen_pol0.root`) would make AmpTools
+  stop with `ROOTDataReader ... does not contain any events`. Such bins are
+  listed after the `bin` step, skipped by `fit`, and show `fit_ok = 0` in
+  `results.csv`. Narrow the `mass` or `t` range to get rid of them.
+
 * The template keeps the reaction name `EtaPi` and the same wave names as the
   η π⁻ version, so `extract_fit_results_etapi` works unchanged.
 * `Zlm` in halld_sim takes the angles from particles 1–3 (proton as the

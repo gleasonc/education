@@ -100,6 +100,22 @@ def main_fit_file(d):
     return fitfiles[0] if fitfiles else None
 
 
+def n_events(path, tree="kin"):
+    """Number of entries in a ROOT file's tree, or None if it can't be read
+    (no uproot, missing file)."""
+    try:
+        import uproot
+        with uproot.open(path) as f:
+            return f[tree].num_entries if tree in f else 0
+    except Exception:
+        return None
+
+
+def empty_samples(d, b, tree="kin"):
+    """Samples of bin b (in folder d) whose tree has no events."""
+    return [tok for tok, f in b["files"].items() if n_events(d / f, tree) == 0]
+
+
 def load_bins(workdir):
     path = Path(workdir) / BINS_JSON
     if not path.exists():
@@ -201,6 +217,12 @@ def step_bin(args):
         (work / BINS_JSON).write_text(json.dumps(bins, indent=1))
         shutil.rmtree(tmp, ignore_errors=True)
     print(f"Made {len(bins)} bins ({nm} mass x {nt} t) in {work}/")
+    if not args.dry_run:
+        for b in bins:
+            empty = empty_samples(work / b["name"], b, args.tree or "kin")
+            if empty:
+                print(f"  ! {b['name']} ({b['mass_lo']:.3f}-{b['mass_hi']:.3f} GeV): "
+                      f"no events in {', '.join(empty)}; it will be skipped by the fit")
 
 
 # --------------------------------------------------------------------------
@@ -317,6 +339,10 @@ def step_fit(args):
 
     def fit_one(b):
         d = work / b["name"]
+        empty = [] if args.dry_run else empty_samples(d, b, getattr(args, "tree", None) or "kin")
+        if empty:
+            print(f"  - {b['name']}: skipped, no events in {', '.join(empty)}")
+            return b["name"], "skipped"
         (d / "fit.cfg").write_text(make_config(template, b, template_dir, use_init,
                                                      getattr(args, "waves", None)))
         rc = run([args.fit_exe, "-c", "fit.cfg"] + extra, cwd=d,
@@ -327,9 +353,11 @@ def step_fit(args):
 
     with ThreadPoolExecutor(max_workers=args.jobs) as pool:
         results = list(pool.map(fit_one, bins))
-    bad = [n for n, rc in results if rc]
-    print(f"Fits done: {len(results) - len(bad)} ok, {len(bad)} failed"
-          + (f": {', '.join(bad)}" if bad else ""))
+    skipped = [n for n, rc in results if rc == "skipped"]
+    bad = [n for n, rc in results if rc and rc != "skipped"]
+    print(f"Fits done: {len(results) - len(bad) - len(skipped)} ok, {len(bad)} failed"
+          + (f": {', '.join(bad)}" if bad else "")
+          + (f", {len(skipped)} skipped (empty bins)" if skipped else ""))
 
 
 # --------------------------------------------------------------------------
