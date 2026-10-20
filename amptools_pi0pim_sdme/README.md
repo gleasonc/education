@@ -87,8 +87,18 @@ Leave `cfg` or `cfg_single` empty in the INI to skip one kind. The polarization
 fractions and angles are the `define polVal_..` / `polAngle_..` lines at the
 top of both templates. With `fit -r N`, the `parSDME` keyword lines make
 halld_sim's `fit` also start each try from random SDMEs that form a valid
-density matrix; the best try is kept as `<name>.fit`. Bins with no events in a
-needed file are skipped.
+density matrix; the best try (lowest −2 ln L among the converged ones) is kept
+as `<name>.fit`. Use it: in the closure test below, single starts ended in false
+minima in about one fit in ten, with a likelihood clearly worse than at the
+generated values. The example INI sets `rand = 5`.
+
+The combined fits run first, and each single-orientation fit then starts once
+from the combined result of its bin (`start_from_combined = true`, the
+default; `--no-start-from-combined` runs all fits independently). Starting the
+0° and 90° fits from the template values often ended in a false minimum.
+A fit that does not converge writes no `.fit` file and is listed as "not
+converged" at the end of the step. Bins with no events in a needed file are
+skipped.
 
 **gather.** Reads every `.fit` file and writes `results.csv`, one row per bin
 and fit (`fit` = `all`, `pol00`, …), with the nine SDMEs, the derived
@@ -109,7 +119,10 @@ per-orientation points).
 
 Dashed lines mark s-channel helicity conservation with natural-parity exchange
 (ρᴺ₁₁ = 0.5, P_σ = Σ = 1). `--fits all` plots only the combined fit;
-`--format png` also writes PNG files.
+`--format png` also writes PNG files. `--reference FILE.csv` (or `reference =`
+in `[plot]`) draws reference SDMEs vs −t in gray, e.g. published values or the
+`truth.csv` of a closure test; the CSV needs a column `t` (or `t_lo`, `t_hi`)
+and the nine SDME columns named as in the fit (`rho000` … `rho1m12`).
 
 **plotfit.** Checks each fit by comparing the data with the accepted MC
 weighted by the fitted intensity, as in Fig. 5 of the paper, in cos ϑ_H, φ_H,
@@ -160,6 +173,10 @@ dσ/dΦ ∝ 1 − P_γ Σ cos 2Φ, in the same sign convention as TwoPiAngles
 | `split_bins.C` | ROOT macro: splits trees into M × −t bins, optionally one orientation |
 | `sdme_fit_plotter.py` | data vs. fit plots for one .fit file |
 | `submit_sdme_jobs.py` | submits one swif2 farm job per bin |
+| `closure/make_closure_test.py` | writes gen_amp configs with known SDMEs per −t bin and orientation |
+| `closure/closure_pulls.py` | pulls (fit − generated)/error of a closure test vs −t, and their histograms |
+| `closure/merge_closure.C` | merges the gen_amp files and adds the `pol` and `Weight` branches |
+| `closure/reference_sdmes_gluex_prelim.csv` | GlueX preliminary ρ⁻ SDMEs, read off a plot (approximate) |
 
 ## 6. Test
 
@@ -172,3 +189,50 @@ single-orientation fits agreed as well, except one fit at low −t whose
 SDMEs make the angular distribution W negative in part of the angular range
 (TwoPiAngles uses |W|), so it is not a physical solution; use `-r` for
 several starts and compare with the combined fit.
+
+## 7. Closure test with known SDMEs
+
+`closure/make_closure_test.py` generates samples with known SDMEs, so you can
+check that the fit returns them. For each −t bin of your INI and each
+orientation it writes a gen_amp config whose TwoPiAngles amplitude has the
+SDMEs of a reference table, interpolated to the bin centre. By default that
+table is `closure/reference_sdmes_gluex_prelim.csv`, the GlueX preliminary
+values read off a plot by eye (good to about ±0.02); replace it with the
+published numbers when you have them.
+
+```tcsh
+python3 closure/make_closure_test.py -c my_sdme.ini --outdir closure_test   # --nevents, --nflat, --sdmes
+bash closure_test/generate.sh                                               # gen_amp + merge
+python3 amptools_sdme.py all -c closure_test/closure_sdme.ini
+```
+
+`generate.sh` makes `data.root` (all orientations, `pol` branch filled) and
+`flat.root` (isotropic in the angles, with the ρ Breit–Wigner in mass; used as both accepted and generated MC);
+`closure_sdme.ini` is your INI pointed at those files, with the generated values
+(`truth.csv`) drawn as gray boxes in the plots. `python3 closure/closure_pulls.py
+closure_test/closure_fit/results.csv closure_test/truth.csv` then plots the
+pulls. The script warns if the SDMEs of
+a bin make the angular distribution negative somewhere, since gen_amp then
+generates |W| and the bin cannot close.
+
+This is a generator-level test (no detector): it checks the fit set-up, the
+binning and the polarization bookkeeping, not the acceptance. By default the
+target is a proton at rest. With a gen_amp that has the deuteron options
+(`-deut`, `-fermi`), generate on the neutron of the deuteron instead:
+
+```tcsh
+python3 closure/make_closure_test.py -c my_sdme.ini --outdir closure_deut \
+    --deut Neutron --fermi PFermi_D2.dat --jobs 4
+```
+
+Fermi motion moves −t slightly, so each bin is then generated over a range
+widened by `--t-margin` (0.03 GeV²) and cut back to the bin when merging, so
+every bin only holds events generated with its own SDMEs. `--jobs N` runs N
+gen_amp jobs at a time. To include the acceptance, pass the generated files
+through the simulation and your DSelector before fitting.
+
+Run here with the GlueX preliminary values, 10 −t bins from 0.1 to 1.1 GeV²,
+10k events per bin and orientation and 100k flat events per bin: with
+`rand = 5` and the single-orientation fits started from the combined result,
+all 50 fits returned the generated SDMEs (pulls: mean 0.0, RMS 1.3 for the
+combined fits and 1.0–1.1 for the single-orientation fits).
