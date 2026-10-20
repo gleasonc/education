@@ -40,7 +40,31 @@ python3 amptools_sdme.py plotfit -c my_sdme.ini  # data vs. fit
 ```
 
 Options on the command line override the INI. `--dry-run` prints the commands
-without running them.
+without running them. `fit` and `plotfit` take `--bin NAME ...` to run only
+some bins; `plotfit` skips fit plots that are newer than their `.fit` file
+unless `--redo-plots` is given.
+
+### On the JLab farm (swif2)
+
+`submit_sdme_jobs.py` submits one swif2 job per bin; each job runs the five
+fits of its bin (combined + one per orientation) and their fit plots. The job
+settings (workflow, account, partition, `os = el9`, cores, ram, disk, time and
+the tcsh lines that set up the GlueX environment) are in the `[farm]` section
+of the INI.
+
+```tcsh
+python3 amptools_sdme.py bin -c my_sdme.ini            # on ifarm, once
+python3 submit_sdme_jobs.py -c my_sdme.ini --dry-run   # check the job scripts
+python3 submit_sdme_jobs.py -c my_sdme.ini             # submit (add --fit-args "-r 5")
+swif2 status -workflow sdme_pi0pim                     # wait until all jobs are done
+python3 amptools_sdme.py gather  -c my_sdme.ini
+python3 amptools_sdme.py plot    -c my_sdme.ini
+python3 amptools_sdme.py plotfit -c my_sdme.ini        # only merges the per-bin pages
+```
+
+Job scripts go to `<workdir>/jobs/<bin>.csh`, logs to `<workdir>/jobs/log/`.
+Failed jobs can be resubmitted with `swif2 retry-jobs` or by running
+`submit_sdme_jobs.py --bin NAME`.
 
 ## 3. What each step does
 
@@ -135,6 +159,7 @@ dσ/dΦ ∝ 1 − P_γ Σ cos 2Φ, in the same sign convention as TwoPiAngles
 | `fit_pi0pim_SDME_1pol_TEMPLATE.cfg` | fit of one orientation |
 | `split_bins.C` | ROOT macro: splits trees into M × −t bins, optionally one orientation |
 | `sdme_fit_plotter.py` | data vs. fit plots for one .fit file |
+| `submit_sdme_jobs.py` | submits one swif2 farm job per bin |
 
 ## 6. Test
 
@@ -143,6 +168,7 @@ halld_sim sources (TwoPiAngles, ROOTDataReader) on a toy sample: 80k
 γp → pπ⁻π⁰ events generated with known, −t-dependent SDMEs and random
 orientations, with 200k phase-space events as MC. The combined fits returned
 the input SDMEs in every bin (pulls with mean 0.0 and RMS 1.1). The
-single-orientation fits agreed as well, except one fit at low −t that
-settled in a wrong minimum; use `-r` for several starts and compare with the
-combined fit.
+single-orientation fits agreed as well, except one fit at low −t whose
+SDMEs make the angular distribution W negative in part of the angular range
+(TwoPiAngles uses |W|), so it is not a physical solution; use `-r` for
+several starts and compare with the combined fit.

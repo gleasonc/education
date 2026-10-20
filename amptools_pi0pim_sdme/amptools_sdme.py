@@ -153,6 +153,16 @@ def load_bins(workdir):
     return json.loads(path.read_text())
 
 
+def select_bins(bins, names):
+    """Only the bins named in --bin (all bins without it)."""
+    if not names:
+        return bins
+    unknown = [n for n in names if n not in {b["name"] for b in bins}]
+    if unknown:
+        sys.exit(f"--bin: no bin {' '.join(unknown)} in {BINS_JSON}")
+    return [b for b in bins if b["name"] in names]
+
+
 def parse_orientations(items):
     """['00:0', '45:45', ...] -> [('00', 0), ('45', 45), ...]"""
     out = []
@@ -292,7 +302,7 @@ def fit_jobs(b, args):
 
 def step_fit(args):
     work = Path(args.workdir)
-    bins = load_bins(work)
+    bins = select_bins(load_bins(work), args.bin)
     args.cfg_text = Path(args.cfg).read_text() if args.cfg else ""
     args.cfg_single_text = Path(args.cfg_single).read_text() if args.cfg_single else ""
     extra = []
@@ -576,7 +586,7 @@ def merge_pdfs(pdfs, out):
 
 def step_plotfit(args):
     work = Path(args.workdir)
-    bins = load_bins(work)
+    bins = select_bins(load_bins(work), args.bin)
     jobs = []
     for b in bins:
         for name in [COMBINED] + [f"pol{s}" for s in b["orientations"]]:
@@ -589,6 +599,9 @@ def step_plotfit(args):
 
     def one(job):
         b, name, d, fitfile = job
+        out = d / "fitplots.pdf"
+        if not args.redo_plots and out.exists() and out.stat().st_mtime >= fitfile.stat().st_mtime:
+            return name, out                     # already made (e.g. by a farm job)
         title = f"{b['name']}/{name}: {b['mass_lo']:.3f} < M < {b['mass_hi']:.3f} GeV"
         if b["t_lo"] is not None:
             title += f", {b['t_lo']:.2f} < -t < {b['t_hi']:.2f}"
@@ -602,7 +615,7 @@ def step_plotfit(args):
 
     with ThreadPoolExecutor(max_workers=args.jobs) as pool:
         done = [r for r in pool.map(one, jobs) if r[1] and r[1].exists()]
-    if args.dry_run or not done:
+    if args.dry_run or not done or args.bin:
         return
     outdir = work / "plots"
     outdir.mkdir(exist_ok=True)
@@ -669,6 +682,10 @@ def build_parser():
     f.add_argument("--minos", action="store_true", help="fit -n: use MINOS")
     f.add_argument("--fit-args", default="", help='any other fit options')
 
+    sel = argparse.ArgumentParser(add_help=False)
+    sel.add_argument("--bin", nargs="+", metavar="NAME",
+                     help="only these bins, e.g. bin_m000_t03 (used by the farm jobs)")
+
     g = argparse.ArgumentParser(add_help=False)
 
     pl = argparse.ArgumentParser(add_help=False)
@@ -681,15 +698,17 @@ def build_parser():
                     help="fit-quality plotter (default: sdme_fit_plotter.py next to this script)")
     pf.add_argument("--no-plotfit", dest="plotfit", action="store_false",
                     help="with 'all': skip the fit-quality plots")
+    pf.add_argument("--redo-plots", action="store_true",
+                    help="remake fitplots.pdf even when it is newer than the .fit file")
 
     subs = {
         "bin": sub.add_parser("bin", parents=[common, b], help="split samples into bins"),
-        "fit": sub.add_parser("fit", parents=[common, f], help="run the fits in each bin"),
+        "fit": sub.add_parser("fit", parents=[common, f, sel], help="run the fits in each bin"),
         "gather": sub.add_parser("gather", parents=[common, g], help="collect results to CSV"),
         "plot": sub.add_parser("plot", parents=[common, pl], help="plot the results"),
-        "plotfit": sub.add_parser("plotfit", parents=[common, pf],
+        "plotfit": sub.add_parser("plotfit", parents=[common, pf, sel],
                                   help="data vs. fit plots for every fit"),
-        "all": sub.add_parser("all", parents=[common, b, f, g, pl, pf],
+        "all": sub.add_parser("all", parents=[common, b, f, g, pl, pf, sel],
                               help="run bin, fit, gather, plot, plotfit"),
     }
     return p, subs
@@ -727,6 +746,8 @@ def config_defaults(path, subparser, all_subparsers):
     known = {a.dest for sp in all_subparsers.values() for a in sp._actions}
     out = {}
     for section in cp.sections():
+        if section.lower() == "farm":
+            continue                    # job settings, read by submit_sdme_jobs.py
         if section.lower() == "samples":
             out["sample"] = [[f"{tok}={localize(v)}" for tok, v in cp.items(section)]]
             continue
