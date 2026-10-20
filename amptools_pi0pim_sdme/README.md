@@ -174,6 +174,7 @@ dσ/dΦ ∝ 1 − P_γ Σ cos 2Φ, in the same sign convention as TwoPiAngles
 | `sdme_fit_plotter.py` | data vs. fit plots for one .fit file |
 | `submit_sdme_jobs.py` | submits one swif2 farm job per bin |
 | `closure/make_closure_test.py` | writes gen_amp configs with known SDMEs per −t bin and orientation |
+| `closure/closure_pulls.py` | pulls (fit − generated)/error of a closure test vs −t, and their histograms |
 | `closure/merge_closure.C` | merges the gen_amp files and adds the `pol` and `Weight` branches |
 | `closure/reference_sdmes_gluex_prelim.csv` | GlueX preliminary ρ⁻ SDMEs, read off a plot (approximate) |
 
@@ -208,7 +209,9 @@ python3 amptools_sdme.py all -c closure_test/closure_sdme.ini
 `generate.sh` makes `data.root` (all orientations, `pol` branch filled) and
 `flat.root` (isotropic in the angles, with the ρ Breit–Wigner in mass; used as both accepted and generated MC);
 `closure_sdme.ini` is your INI pointed at those files, with the generated values
-(`truth.csv`) drawn as gray boxes in the plots. The script warns if the SDMEs of
+(`truth.csv`) drawn as gray boxes in the plots. `python3 closure/closure_pulls.py
+closure_test/closure_fit/results.csv closure_test/truth.csv` then plots the
+pulls. The script warns if the SDMEs of
 a bin make the angular distribution negative somewhere, since gen_amp then
 generates |W| and the bin cannot close.
 
