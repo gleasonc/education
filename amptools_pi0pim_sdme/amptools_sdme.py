@@ -461,9 +461,26 @@ def num(v):
     return None if x != x else x
 
 
-def plot_grid(rows, quantities, ncols, out_pdf, args, ylims, ref_lines):
+def read_reference(path):
+    """Reference SDMEs vs -t (CSV: t or t_lo,t_hi, plus SDME columns; '#' lines are
+    comments), with the derived quantities added."""
+    with open(path) as f:
+        lines = [l for l in f if l.strip() and not l.lstrip().startswith("#")]
+    ref = []
+    for r in csv.DictReader(lines):
+        r = {k.strip(): num(v) for k, v in r.items()}
+        if all(r.get(n) is not None for n, _ in SDMES):
+            for name, (const, coef, _) in DERIVED.items():
+                r[name] = const + sum(c * r[k] for k, c in coef.items())
+        ref.append(r)
+    return sorted(ref, key=lambda r: r.get("t") or 0.5 * (r["t_lo"] + r["t_hi"]))
+
+
+def plot_grid(rows, quantities, ncols, out_pdf, args, ylims, ref_lines, reference=None):
     """One page per mass bin (x = -t) or a single page (x = mass, no t bins):
-    a panel per quantity, one series per fit."""
+    a panel per quantity, one series per fit. `reference` (rows of
+    read_reference) is drawn in gray: a box per bin if it has t_lo/t_hi,
+    otherwise a line."""
     import matplotlib
     matplotlib.use("Agg")
     import matplotlib.pyplot as plt
@@ -497,6 +514,15 @@ def plot_grid(rows, quantities, ncols, out_pdf, args, ylims, ref_lines):
                                 xerr=xerr, fmt="o", ms=3, capsize=1.5, lw=1,
                                 color=color, label=name)
                 ax.axhline(0.0, color="#1f3fbf", lw=0.8)
+                rpts = [r for r in (reference or []) if r.get(q) is not None] if use_t else []
+                if rpts and rpts[0].get("t_lo") is not None:
+                    for i, r in enumerate(rpts):
+                        ax.fill_between([r["t_lo"], r["t_hi"]], r[q] - 0.01, r[q] + 0.01,
+                                        color="gray", alpha=0.5, lw=0, zorder=0,
+                                        label=args.reference_label if i == 0 else None)
+                elif rpts:
+                    ax.plot([r["t"] for r in rpts], [r[q] for r in rpts], color="gray",
+                            lw=1.5, marker="s", ms=2.5, zorder=0, label=args.reference_label)
                 if q in ref_lines:
                     ax.axhline(ref_lines[q], color="gray", lw=0.8, ls="--")
                 # the given range, widened when points (with errors) fall outside it
@@ -551,14 +577,16 @@ def step_plot(args):
                                           "rhoU_11", "rhoU_00", "rhoU_1m1", "ReRhoU_10")]
     # every fit, then (<name>_total.pdf) only the combined fit of all orientations
     total = [r for r in rows if r["fit"] == COMBINED]
+    ref = read_reference(args.reference) if args.reference else None
     for sel, suffix in ((rows, ""), (total, "_total")):
         if not sel or (suffix and len(total) == len(rows)):
             continue
-        plot_grid(sel, SDMES, 3, outdir / f"sdmes{suffix}.pdf", args, {"default": y}, {})
+        plot_grid(sel, SDMES, 3, outdir / f"sdmes{suffix}.pdf", args, {"default": y}, {}, ref)
         plot_grid(sel, comps, 4, outdir / f"parity_components{suffix}.pdf", args,
-                  {"default": (-0.2, 0.2), "rhoN_11": (0.3, 0.7)}, SCHC_NPE)
+                  {"default": (-0.2, 0.2), "rhoN_11": (0.3, 0.7)}, SCHC_NPE, ref)
         plot_grid(sel, [(k, DERIVED[k][2]) for k in ("P_sigma", "Sigma")], 2,
-                  outdir / f"asymmetries{suffix}.pdf", args, {"default": (-0.5, 1.5)}, SCHC_NPE)
+                  outdir / f"asymmetries{suffix}.pdf", args, {"default": (-0.5, 1.5)},
+                  SCHC_NPE, ref)
 
 
 # --------------------------------------------------------------------------
@@ -692,6 +720,9 @@ def build_parser():
     pl.add_argument("--format", default="pdf", help="pdf, or png etc. for extra image files")
     pl.add_argument("--ylim", type=float, default=0.5, help="SDME plots: y from -YLIM to YLIM")
     pl.add_argument("--fits", nargs="+", help="plot only these fits, e.g. all pol00 pol90")
+    pl.add_argument("--reference", help="CSV of SDMEs vs -t drawn in gray, e.g. published "
+                    "values or the truth.csv of a closure test")
+    pl.add_argument("--reference-label", default="reference", help="legend label of --reference")
 
     pf = argparse.ArgumentParser(add_help=False)
     pf.add_argument("--plotter", default=str(here / "sdme_fit_plotter.py"),
@@ -715,7 +746,7 @@ def build_parser():
 
 
 # settings whose relative paths are taken relative to the config file
-CONFIG_PATH_KEYS = {"cfg", "cfg_single", "splitter", "plotter"}
+CONFIG_PATH_KEYS = {"cfg", "cfg_single", "splitter", "plotter", "reference"}
 
 
 def config_defaults(path, subparser, all_subparsers):

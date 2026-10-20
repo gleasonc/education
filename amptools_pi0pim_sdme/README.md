@@ -109,7 +109,10 @@ per-orientation points).
 
 Dashed lines mark s-channel helicity conservation with natural-parity exchange
 (ρᴺ₁₁ = 0.5, P_σ = Σ = 1). `--fits all` plots only the combined fit;
-`--format png` also writes PNG files.
+`--format png` also writes PNG files. `--reference FILE.csv` (or `reference =`
+in `[plot]`) draws reference SDMEs vs −t in gray, e.g. published values or the
+`truth.csv` of a closure test; the CSV needs a column `t` (or `t_lo`, `t_hi`)
+and the nine SDME columns named as in the fit (`rho000` … `rho1m12`).
 
 **plotfit.** Checks each fit by comparing the data with the accepted MC
 weighted by the fitted intensity, as in Fig. 5 of the paper, in cos ϑ_H, φ_H,
@@ -160,6 +163,9 @@ dσ/dΦ ∝ 1 − P_γ Σ cos 2Φ, in the same sign convention as TwoPiAngles
 | `split_bins.C` | ROOT macro: splits trees into M × −t bins, optionally one orientation |
 | `sdme_fit_plotter.py` | data vs. fit plots for one .fit file |
 | `submit_sdme_jobs.py` | submits one swif2 farm job per bin |
+| `closure/make_closure_test.py` | writes gen_amp configs with known SDMEs per −t bin and orientation |
+| `closure/merge_closure.C` | merges the gen_amp files and adds the `pol` and `Weight` branches |
+| `closure/reference_sdmes_gluex_prelim.csv` | GlueX preliminary ρ⁻ SDMEs, read off a plot (approximate) |
 
 ## 6. Test
 
@@ -172,3 +178,31 @@ single-orientation fits agreed as well, except one fit at low −t whose
 SDMEs make the angular distribution W negative in part of the angular range
 (TwoPiAngles uses |W|), so it is not a physical solution; use `-r` for
 several starts and compare with the combined fit.
+
+## 7. Closure test with known SDMEs
+
+`closure/make_closure_test.py` generates samples with known SDMEs, so you can
+check that the fit returns them. For each −t bin of your INI and each
+orientation it writes a gen_amp config whose TwoPiAngles amplitude has the
+SDMEs of a reference table, interpolated to the bin centre. By default that
+table is `closure/reference_sdmes_gluex_prelim.csv`, the GlueX preliminary
+values read off a plot by eye (good to about ±0.02); replace it with the
+published numbers when you have them.
+
+```tcsh
+python3 closure/make_closure_test.py -c my_sdme.ini --outdir closure_test   # --nevents, --nflat, --sdmes
+bash closure_test/generate.sh                                               # gen_amp + merge
+python3 amptools_sdme.py all -c closure_test/closure_sdme.ini
+```
+
+`generate.sh` makes `data.root` (all orientations, `pol` branch filled) and
+`flat.root` (phase space, used as both accepted and generated MC);
+`closure_sdme.ini` is your INI pointed at those files, with the generated values
+(`truth.csv`) drawn as gray boxes in the plots. The script warns if the SDMEs of
+a bin make the angular distribution negative somewhere, since gen_amp then
+generates |W| and the bin cannot close.
+
+This is a generator-level test (no detector, proton target at rest): it checks
+the fit set-up, the binning and the polarization bookkeeping, not the
+acceptance. To include the acceptance, pass the gen_amp files through the
+simulation and your DSelector before fitting.
