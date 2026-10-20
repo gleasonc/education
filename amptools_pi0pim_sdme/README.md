@@ -212,10 +212,21 @@ python3 amptools_sdme.py all -c closure_test/closure_sdme.ini
 a bin make the angular distribution negative somewhere, since gen_amp then
 generates |W| and the bin cannot close.
 
-This is a generator-level test (no detector, proton target at rest): it checks
-the fit set-up, the binning and the polarization bookkeeping, not the
-acceptance. To include the acceptance, pass the gen_amp files through the
-simulation and your DSelector before fitting.
+This is a generator-level test (no detector): it checks the fit set-up, the
+binning and the polarization bookkeeping, not the acceptance. By default the
+target is a proton at rest. With a gen_amp that has the deuteron options
+(`-deut`, `-fermi`), generate on the neutron of the deuteron instead:
+
+```tcsh
+python3 closure/make_closure_test.py -c my_sdme.ini --outdir closure_deut \
+    --deut Neutron --fermi PFermi_D2.dat --jobs 4
+```
+
+Fermi motion moves −t slightly, so each bin is then generated over a range
+widened by `--t-margin` (0.03 GeV²) and cut back to the bin when merging, so
+every bin only holds events generated with its own SDMEs. `--jobs N` runs N
+gen_amp jobs at a time. To include the acceptance, pass the generated files
+through the simulation and your DSelector before fitting.
 
 Run here with the GlueX preliminary values, 10 −t bins from 0.1 to 1.1 GeV²,
 10k events per bin and orientation and 100k flat events per bin: with

@@ -3,7 +3,9 @@
 //
 //   root -l -b -q 'merge_closure.C("data.root","data_files.txt","pol")'
 //
-// listFile: one "file.root pol" per line (pol = -1 for MC without orientation).
+// listFile: one "file.root pol [tmin tmax]" per line (pol = -1 for MC without
+// orientation). With tmin/tmax only events with tmin <= -t < tmax are kept,
+// -t = -(beam - pi- - pi0)^2 (final-state particles 1 and 2).
 // gen_amp writes the tree "kin" with Beam + Proton Pi- Pi0 (NumFinalState = 3).
 
 #include <fstream>
@@ -12,6 +14,7 @@
 #include <string>
 #include "TFile.h"
 #include "TTree.h"
+#include "TLorentzVector.h"
 
 void merge_closure(const char* outName, const char* listFile, const char* polBranch = "pol")
 {
@@ -42,7 +45,9 @@ void merge_closure(const char* outName, const char* listFile, const char* polBra
     std::istringstream ss(line);
     std::string file;
     int p;
+    double tmin = -1, tmax = -1;
     if (!(ss >> file >> p)) continue;
+    bool cutT = static_cast<bool>(ss >> tmin >> tmax);
     TFile in(file.c_str());
     TTree* t = in.IsZombie() ? nullptr : (TTree*)in.Get("kin");
     if (!t) { std::cerr << "merge_closure: no tree kin in " << file << std::endl; exit(1); }
@@ -58,15 +63,24 @@ void merge_closure(const char* outName, const char* listFile, const char* polBra
     bool hasW = t->GetBranch("Weight") != nullptr;
     if (hasW) t->SetBranchAddress("Weight", &wIn);
     pol = p;
+    Long64_t kept = 0;
     for (Long64_t i = 0; i < t->GetEntries(); ++i) {
       t->GetEntry(i);
       if (nFS > maxN) { std::cerr << "merge_closure: too many particles" << std::endl; exit(1); }
+      if (cutT) {
+        TLorentzVector beam(pxB, pyB, pzB, eB);
+        TLorentzVector meson(px[1] + px[2], py[1] + py[2], pz[1] + pz[2], e[1] + e[2]);
+        double minusT = -(beam - meson).M2();
+        if (minusT < tmin || minusT >= tmax) continue;
+      }
+      ++kept;
       w = hasW ? wIn : 1.f;
       out.cd();
       tOut->Fill();
     }
-    total += t->GetEntries();
-    std::cout << file << ": " << t->GetEntries() << " events, " << polBranch << " = " << p << std::endl;
+    total += kept;
+    std::cout << file << ": " << kept << " of " << t->GetEntries() << " events, "
+              << polBranch << " = " << p << std::endl;
   }
   out.cd();
   tOut->Write();

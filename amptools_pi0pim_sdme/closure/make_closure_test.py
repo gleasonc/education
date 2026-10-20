@@ -22,10 +22,13 @@ so the test is:
   python3 amptools_sdme.py all -c closure_test/closure_sdme.ini
 
 The fitted SDMEs should agree with truth.csv (gray boxes in the plots).
-This is a generator-level test (no detector, no deuteron spectator): it checks
-the fit set-up, the binning and the polarization bookkeeping. To include the
-acceptance, pass the generated files through your simulation and DSelector
-before fitting.
+This is a generator-level test (no detector): it checks the fit set-up, the
+binning and the polarization bookkeeping. With --deut Neutron (and --fermi
+FILE) the events are generated on a moving neutron in the deuteron, with a
+gen_amp that has the -deut/-fermi options; the ROOT files then have the same
+kinematics as gamma d -> pi- pi0 p (p_spectator) data. To include the
+acceptance, pass the generated files (HDDM, with the spectator) through your
+simulation and DSelector before fitting.
 """
 
 import argparse
@@ -154,6 +157,15 @@ def main():
     ap.add_argument("--gen-amp", default="gen_amp", help="gen_amp executable")
     ap.add_argument("--root-exe", default="root")
     ap.add_argument("--seed", type=int, default=1000, help="first random seed")
+    ap.add_argument("--deut", choices=["Neutron", "Proton"],
+                    help="deuteron target (needs a gen_amp with -deut/-fermi): the nucleon the "
+                         "photon hits, e.g. Neutron for gamma d -> pi- pi0 p (p)")
+    ap.add_argument("--fermi", help="gen_amp -fermi: |p_Fermi| distribution file "
+                                    "(default: gen_amp's Hulthen wave function)")
+    ap.add_argument("--t-margin", type=float, default=0.03,
+                    help="with --deut: generate each bin over [t_lo - M, t_hi + M] and keep "
+                         "only events whose -t falls in the bin (default %(default)s)")
+    ap.add_argument("--jobs", type=int, default=1, help="gen_amp jobs run in parallel by generate.sh")
     args = ap.parse_args()
 
     ini = Path(args.config).resolve()
@@ -191,10 +203,20 @@ def main():
                                                               rho_width=args.rho[1]))
     common = (f"-l {mass[0]} -u {mass[1]} -a {args.ebeam[0]} -b {args.ebeam[1]} "
               f"-t {args.slope}")
+    if args.deut:
+        common += f" -deut {args.deut}"
+        if args.fermi:
+            common += f" -fermi {Path(args.fermi).resolve()}"
+    # Fermi motion moves -t a little: generate a bit wider, cut back to the bin in the merge
+    margin = args.t_margin if args.deut else 0.0
+
+    def scale(n, a, b):
+        """Events to generate so that about n remain in [a, b] after the margin cut."""
+        return int(round(n * (b - a + 2 * margin) / (b - a)))
     for k, (a, b) in enumerate(zip(tedges, tedges[1:])):
         s = interpolate(ref, 0.5 * (a + b))
         truth.append({"t_lo": a, "t_hi": b, "t": 0.5 * (a + b), **s})
-        trange = f"-tmin {a:.5f} -tmax {b:.5f}"
+        trange = f"-tmin {max(a - margin, 0.0):.5f} -tmax {b + margin:.5f}"
         for suf, ang, val in pols:
             tag = f"t{k:02d}_pol{suf}"
             w = min_w(s, float(val))
@@ -209,13 +231,13 @@ def main():
                 sdme_comment=" ".join(f"{n}={s[n]:.3f}" for n in SDME_NAMES)))
             raw = out / "raw" / f"{tag}.root"
             cmds.append(f"run {shlex.quote(str(cfg))} {shlex.quote(str(raw))} "
-                        f"\"{common} {trange} -n {args.nevents} -s {seed}\"")
-            data_files.append((raw, pol_values[suf]))
+                        f"\"{common} {trange} -n {scale(args.nevents, a, b)} -s {seed}\"")
+            data_files.append((raw, pol_values[suf], a, b))
             seed += 1
         raw = out / "raw" / f"t{k:02d}_flat.root"
         cmds.append(f"run {shlex.quote(str(out / 'cfg' / 'gen_flat.cfg'))} {shlex.quote(str(raw))} "
-                    f"\"{common} {trange} -n {args.nflat} -s {seed} -f\"")
-        flat_files.append(raw)
+                    f"\"{common} {trange} -n {scale(args.nflat, a, b)} -s {seed} -f\"")
+        flat_files.append((raw, -1, a, b))
         seed += 1
 
     with open(out / "truth.csv", "w", newline="") as f:
@@ -224,9 +246,9 @@ def main():
         for r in truth:
             w.writerow({k: (f"{v:.5f}" if isinstance(v, float) else v) for k, v in r.items()})
 
-    # file lists for the merge macro: "file pol" per line
-    (out / "data_files.txt").write_text("".join(f"{p} {v}\n" for p, v in data_files))
-    (out / "flat_files.txt").write_text("".join(f"{p} -1\n" for p in flat_files))
+    # file lists for the merge macro: "file pol tmin tmax" per line
+    for name, files in (("data_files.txt", data_files), ("flat_files.txt", flat_files)):
+        (out / name).write_text("".join(f"{p} {v} {a:.6f} {b:.6f}\n" for p, v, a, b in files))
     merge = HERE / "merge_closure.C"
     script = f"""#!/bin/bash
 # Generate the closure-test samples (written by make_closure_test.py).
@@ -234,12 +256,18 @@ def main():
 set -e
 cd {shlex.quote(str(out / 'raw'))}
 GEN_AMP=${{GEN_AMP:-{args.gen_amp}}}
-run() {{  # cfg output "options"
+JOBS=${{JOBS:-{args.jobs}}}
+FAILED=$PWD/failed.txt; rm -f "$FAILED"
+run() {{  # cfg output "options"; each job in its own folder (gen_amp writes local files)
   if [ -s "$2" ]; then echo "exists: $2"; return; fi
+  while [ "$(jobs -rp | wc -l)" -ge "$JOBS" ]; do sleep 1; done
   echo "gen_amp -c $1 -o $2 $3"
-  $GEN_AMP -c "$1" -o "$2" $3 > "${{2%.root}}.log" 2>&1 || {{ echo "gen_amp failed, see ${{2%.root}}.log"; exit 1; }}
+  (d="${{2%.root}}.d"; mkdir -p "$d" && cd "$d" &&
+   $GEN_AMP -c "$1" -o "$2" $3 > "${{2%.root}}.log" 2>&1 || echo "$2" >> "$FAILED") &
 }}
 {chr(10).join(cmds)}
+wait
+if [ -s "$FAILED" ]; then echo "gen_amp failed for:"; cat "$FAILED"; exit 1; fi
 {args.root_exe} -l -b -q '{merge}("{out / 'data.root'}","{out / 'data_files.txt'}","{pol_branch}")'
 {args.root_exe} -l -b -q '{merge}("{out / 'flat.root'}","{out / 'flat_files.txt'}","{pol_branch}")'
 echo "Done: {out / 'data.root'} and {out / 'flat.root'}"
