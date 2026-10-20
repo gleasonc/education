@@ -87,8 +87,18 @@ Leave `cfg` or `cfg_single` empty in the INI to skip one kind. The polarization
 fractions and angles are the `define polVal_..` / `polAngle_..` lines at the
 top of both templates. With `fit -r N`, the `parSDME` keyword lines make
 halld_sim's `fit` also start each try from random SDMEs that form a valid
-density matrix; the best try is kept as `<name>.fit`. Bins with no events in a
-needed file are skipped.
+density matrix; the best try (lowest −2 ln L among the converged ones) is kept
+as `<name>.fit`. Use it: in the closure test below, single starts ended in false
+minima in about one fit in ten, with a likelihood clearly worse than at the
+generated values. The example INI sets `rand = 5`.
+
+The combined fits run first, and each single-orientation fit then starts once
+from the combined result of its bin (`start_from_combined = true`, the
+default; `--no-start-from-combined` runs all fits independently). Starting the
+0° and 90° fits from the template values often ended in a false minimum.
+A fit that does not converge writes no `.fit` file and is listed as "not
+converged" at the end of the step. Bins with no events in a needed file are
+skipped.
 
 **gather.** Reads every `.fit` file and writes `results.csv`, one row per bin
 and fit (`fit` = `all`, `pol00`, …), with the nine SDMEs, the derived
