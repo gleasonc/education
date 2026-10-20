@@ -17,7 +17,7 @@ endif
 python3 -c "import uproot, matplotlib" >& /dev/null
 if ( $status != 0 ) then
     echo "Installing uproot and matplotlib ..."
-    python3 -m pip install --user uproot matplotlib
+    python3 -m pip install --user uproot matplotlib pypdf
     if ( $status != 0 ) exit 1
 endif
 
