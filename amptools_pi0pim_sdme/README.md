@@ -3,7 +3,7 @@
 These scripts fit the ρ spin-density matrix elements (SDMEs) in bins of −t
 with halld_sim's `TwoPiAngles`, for the four beam-polarization orientations
 (0°, 45°, 90°, 135°). One command splits the trees, runs the fits, collects
-the results and makes the plots.
+the results and makes the plots, including data-vs-fit plots for every fit.
 
 It is the SDME version of `../amptools_pippimetapr` (the η′π⁻ wave fits).
 That folder is unchanged.
@@ -36,6 +36,7 @@ python3 amptools_sdme.py bin    -c my_sdme.ini   # split the files
 python3 amptools_sdme.py fit    -c my_sdme.ini -r 5
 python3 amptools_sdme.py gather -c my_sdme.ini
 python3 amptools_sdme.py plot   -c my_sdme.ini
+python3 amptools_sdme.py plotfit -c my_sdme.ini  # data vs. fit
 ```
 
 Options on the command line override the INI. `--dry-run` prints the commands
@@ -78,9 +79,32 @@ fit (pol=0 black, 45 green, 90 red, 135 blue, combined fit purple):
   laid out as Fig. 7 of [arXiv:2305.09047](https://arxiv.org/abs/2305.09047)
 * `asymmetries.pdf`: the parity asymmetry P_σ and the beam asymmetry Σ
 
+Each also comes as `sdmes_total.pdf`, `parity_components_total.pdf` and
+`asymmetries_total.pdf` with only the combined fit (the total result, no
+per-orientation points).
+
 Dashed lines mark s-channel helicity conservation with natural-parity exchange
 (ρᴺ₁₁ = 0.5, P_σ = Σ = 1). `--fits all` plots only the combined fit;
 `--format png` also writes PNG files.
+
+**plotfit.** Checks each fit by comparing the data with the accepted MC
+weighted by the fitted intensity, as in Fig. 5 of the paper, in cos ϑ_H, φ_H,
+Φ, Φ − φ_H, M(π⁻π⁰) and −t. Every fit folder gets `fitplots.pdf` (for the
+combined fit: a page for the sum of the orientations, then one per
+orientation), and `plots/fit_quality_all.pdf`, `plots/fit_quality_pol00.pdf`, …
+collect all bins (needs `pypdf`, `pdfunite` or `gs` to merge). Data events use
+their `Weight`; the fit histogram is normalized to the number of events the fit
+predicts, so it is an absolute comparison. `sdme_fit_plotter.py` also runs on
+its own inside a fit folder:
+
+```tcsh
+cd SDME_fit/bin_m000_t03/all
+python3 ../../../sdme_fit_plotter.py all.fit --check
+```
+
+`--check` compares the predicted yield with the fit's normalization integrals
+and should print `OK`. Leave the step out of `all` with `--no-plotfit` or
+`plotfit = false`.
 
 ## 4. Derived quantities
 
@@ -105,11 +129,12 @@ dσ/dΦ ∝ 1 − P_γ Σ cos 2Φ, in the same sign convention as TwoPiAngles
 | file | what it is |
 |---|---|
 | `run_all.csh` / `run_all.sh` | one command for everything (tcsh / bash) |
-| `amptools_sdme.py` | the driver: bin → fit → gather → plot |
+| `amptools_sdme.py` | the driver: bin → fit → gather → plot → plotfit |
 | `example_sdme.ini` | example settings; copy and edit |
 | `fit_pi0pim_SDME_4pol_TEMPLATE.cfg` | combined fit of the four orientations |
 | `fit_pi0pim_SDME_1pol_TEMPLATE.cfg` | fit of one orientation |
 | `split_bins.C` | ROOT macro: splits trees into M × −t bins, optionally one orientation |
+| `sdme_fit_plotter.py` | data vs. fit plots for one .fit file |
 
 ## 6. Test
 

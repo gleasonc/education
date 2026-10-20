@@ -7,7 +7,7 @@ ini=${1:-example_sdme.ini}; shift || true
 
 if ! python3 -c "import uproot, matplotlib" 2>/dev/null; then
     echo "Installing uproot and matplotlib ..."
-    python3 -m pip install --user uproot matplotlib
+    python3 -m pip install --user uproot matplotlib pypdf
 fi
 
 python3 "$here/amptools_sdme.py" all -c "$ini" "$@"

@@ -23,7 +23,13 @@ the four beam-polarization orientations 0/45/90/135:
   4. plot    plots/sdmes.pdf (3x3 SDMEs vs -t, one colour per orientation and
              one for the combined fit), plots/parity_components.pdf
              (natural / unnatural, as Fig. 7 of arXiv:2305.09047) and
-             plots/asymmetries.pdf (P_sigma, Sigma)
+             plots/asymmetries.pdf (P_sigma, Sigma); the same with only the
+             combined fit in plots/*_total.pdf
+  5. plotfit data vs. the fit (accepted MC weighted by the fitted intensity) in
+             cos(theta_H), phi_H, Phi, Phi - phi_H, M(pi- pi0) and -t, as Fig. 5
+             of arXiv:2305.09047 (sdme_fit_plotter.py): <bin>/<fit>/fitplots.pdf,
+             merged per fit into plots/fit_quality_<fit>.pdf.  `--no-plotfit`
+             (or plotfit = false in the INI) leaves it out of `all`.
 
 Natural / unnatural components (arXiv:2305.09047 Eq. 22,
 rho^{N,U}_{ik} = 1/2 [rho^0_{ik} -+ (-1)^i rho^1_{-ik}]):
@@ -531,13 +537,83 @@ def step_plot(args):
     outdir = work / "plots"
     outdir.mkdir(exist_ok=True)
     y = (-args.ylim, args.ylim)
-    plot_grid(rows, SDMES, 3, outdir / "sdmes.pdf", args, {"default": y}, {})
     comps = [(k, DERIVED[k][2]) for k in ("rhoN_11", "rhoN_00", "rhoN_1m1", "ReRhoN_10",
                                           "rhoU_11", "rhoU_00", "rhoU_1m1", "ReRhoU_10")]
-    plot_grid(rows, comps, 4, outdir / "parity_components.pdf", args,
-              {"default": (-0.2, 0.2), "rhoN_11": (0.3, 0.7)}, SCHC_NPE)
-    plot_grid(rows, [(k, DERIVED[k][2]) for k in ("P_sigma", "Sigma")], 2,
-              outdir / "asymmetries.pdf", args, {"default": (-0.5, 1.5)}, SCHC_NPE)
+    # every fit, then (<name>_total.pdf) only the combined fit of all orientations
+    total = [r for r in rows if r["fit"] == COMBINED]
+    for sel, suffix in ((rows, ""), (total, "_total")):
+        if not sel or (suffix and len(total) == len(rows)):
+            continue
+        plot_grid(sel, SDMES, 3, outdir / f"sdmes{suffix}.pdf", args, {"default": y}, {})
+        plot_grid(sel, comps, 4, outdir / f"parity_components{suffix}.pdf", args,
+                  {"default": (-0.2, 0.2), "rhoN_11": (0.3, 0.7)}, SCHC_NPE)
+        plot_grid(sel, [(k, DERIVED[k][2]) for k in ("P_sigma", "Sigma")], 2,
+                  outdir / f"asymmetries{suffix}.pdf", args, {"default": (-0.5, 1.5)}, SCHC_NPE)
+
+
+# --------------------------------------------------------------------------
+# step 5: fit quality (sdme_fit_plotter.py)
+# --------------------------------------------------------------------------
+
+def merge_pdfs(pdfs, out):
+    """Merge per-bin PDFs into one file with pypdf, pdfunite or ghostscript."""
+    try:
+        from pypdf import PdfWriter
+        w = PdfWriter()
+        for p in pdfs:
+            w.append(str(p))
+        w.write(str(out))
+        return True
+    except ImportError:
+        pass
+    if shutil.which("pdfunite"):
+        return run(["pdfunite"] + [str(p) for p in pdfs] + [str(out)]) == 0
+    if shutil.which("gs"):
+        return run(["gs", "-q", "-dBATCH", "-dNOPAUSE", "-sDEVICE=pdfwrite",
+                    f"-sOutputFile={out}"] + [str(p) for p in pdfs]) == 0
+    return False
+
+
+def step_plotfit(args):
+    work = Path(args.workdir)
+    bins = load_bins(work)
+    jobs = []
+    for b in bins:
+        for name in [COMBINED] + [f"pol{s}" for s in b["orientations"]]:
+            d = work / b["name"] / name
+            fitfile = main_fit_file(d, name) if d.is_dir() else None
+            if fitfile:
+                jobs.append((b, name, d, fitfile))
+    if not jobs:
+        sys.exit("no .fit files found; run the 'fit' step first")
+
+    def one(job):
+        b, name, d, fitfile = job
+        title = f"{b['name']}/{name}: {b['mass_lo']:.3f} < M < {b['mass_hi']:.3f} GeV"
+        if b["t_lo"] is not None:
+            title += f", {b['t_lo']:.2f} < -t < {b['t_hi']:.2f}"
+        rc = run([sys.executable, args.plotter, fitfile.name, "-o", "fitplots.pdf",
+                  "-t", title, "--tree", args.tree or "kin"],
+                 cwd=d, log=d / "plotfit.log", dry=args.dry_run)
+        if rc:
+            print(f"  ! {b['name']}/{name}: plotter exited {rc}, see {d/'plotfit.log'}")
+            return name, None
+        return name, d / "fitplots.pdf"
+
+    with ThreadPoolExecutor(max_workers=args.jobs) as pool:
+        done = [r for r in pool.map(one, jobs) if r[1] and r[1].exists()]
+    if args.dry_run or not done:
+        return
+    outdir = work / "plots"
+    outdir.mkdir(exist_ok=True)
+    for name in dict.fromkeys(n for n, _ in done):
+        pdfs = [p for n, p in done if n == name]
+        out = outdir / f"fit_quality_{name}.pdf"
+        if merge_pdfs(pdfs, out):
+            print(f"Wrote {out} ({len(pdfs)} bins)")
+        else:
+            print(f"Per-bin fit-quality plots in <bin>/{name}/fitplots.pdf; install pypdf "
+                  f"to also get {out.name}")
 
 
 # --------------------------------------------------------------------------
@@ -600,19 +676,27 @@ def build_parser():
     pl.add_argument("--ylim", type=float, default=0.5, help="SDME plots: y from -YLIM to YLIM")
     pl.add_argument("--fits", nargs="+", help="plot only these fits, e.g. all pol00 pol90")
 
+    pf = argparse.ArgumentParser(add_help=False)
+    pf.add_argument("--plotter", default=str(here / "sdme_fit_plotter.py"),
+                    help="fit-quality plotter (default: sdme_fit_plotter.py next to this script)")
+    pf.add_argument("--no-plotfit", dest="plotfit", action="store_false",
+                    help="with 'all': skip the fit-quality plots")
+
     subs = {
         "bin": sub.add_parser("bin", parents=[common, b], help="split samples into bins"),
         "fit": sub.add_parser("fit", parents=[common, f], help="run the fits in each bin"),
         "gather": sub.add_parser("gather", parents=[common, g], help="collect results to CSV"),
         "plot": sub.add_parser("plot", parents=[common, pl], help="plot the results"),
-        "all": sub.add_parser("all", parents=[common, b, f, g, pl],
-                              help="run bin, fit, gather, plot"),
+        "plotfit": sub.add_parser("plotfit", parents=[common, pf],
+                                  help="data vs. fit plots for every fit"),
+        "all": sub.add_parser("all", parents=[common, b, f, g, pl, pf],
+                              help="run bin, fit, gather, plot, plotfit"),
     }
     return p, subs
 
 
 # settings whose relative paths are taken relative to the config file
-CONFIG_PATH_KEYS = {"cfg", "cfg_single", "splitter"}
+CONFIG_PATH_KEYS = {"cfg", "cfg_single", "splitter", "plotter"}
 
 
 def config_defaults(path, subparser, all_subparsers):
@@ -686,8 +770,9 @@ def main():
         subs[known.step].set_defaults(**config_defaults(known.config, subs[known.step], subs))
     args = parser.parse_args()
     steps = {"bin": [step_bin], "fit": [step_fit], "gather": [step_gather],
-             "plot": [step_plot],
-             "all": [step_bin, step_fit, step_gather, step_plot]}[args.step]
+             "plot": [step_plot], "plotfit": [step_plotfit],
+             "all": [step_bin, step_fit, step_gather, step_plot]
+                    + ([step_plotfit] if getattr(args, "plotfit", True) else [])}[args.step]
     if step_bin in steps:
         if not args.sample or not args.mass:
             sys.exit("bin needs --sample and --mass")
