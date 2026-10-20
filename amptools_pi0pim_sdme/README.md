@@ -206,7 +206,7 @@ python3 amptools_sdme.py all -c closure_test/closure_sdme.ini
 ```
 
 `generate.sh` makes `data.root` (all orientations, `pol` branch filled) and
-`flat.root` (phase space, used as both accepted and generated MC);
+`flat.root` (isotropic in the angles, with the ρ Breit–Wigner in mass; used as both accepted and generated MC);
 `closure_sdme.ini` is your INI pointed at those files, with the generated values
 (`truth.csv`) drawn as gray boxes in the plots. The script warns if the SDMEs of
 a bin make the angular distribution negative somewhere, since gen_amp then

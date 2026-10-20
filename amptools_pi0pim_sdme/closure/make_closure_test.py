@@ -7,7 +7,8 @@ gen_amp config whose TwoPiAngles amplitude has the SDMEs of a reference table
 (by default the GlueX preliminary values in reference_sdmes_gluex_prelim.csv,
 interpolated linearly to the bin centre). It also writes
 
-  generate.sh        runs gen_amp for every config, plus flat (-f) MC per t bin,
+  generate.sh        runs gen_amp for every config, plus MC per t bin that is flat
+                     in the angles but keeps the rho Breit-Wigner (gen_flat.cfg),
                      and merges everything into data.root and flat.root in the
                      format amptools_sdme.py reads (tree kin, Proton Pi- Pi0,
                      Weight/F, pol/I)
@@ -64,7 +65,8 @@ amplitude Pi0Pim::xpol::rhoS BreitWigner rho 1 2 3
 initialize Pi0Pim::xpol::rhoS cartesian 1.0 0.0
 """
 
-FLAT_CFG = """# gen_amp config for flat MC (used with -f), written by make_closure_test.py
+FLAT_CFG = """# gen_amp config for the MC, written by make_closure_test.py: no TwoPiAngles, so
+# the angles are isotropic; the rho Breit-Wigner shapes M(pi- pi0) as in the data
 define rho {rho_mass} {rho_width}
 fit closure_flat
 reaction Pi0Pim Beam Proton Pi- Pi0
@@ -236,7 +238,7 @@ def main():
             seed += 1
         raw = out / "raw" / f"t{k:02d}_flat.root"
         cmds.append(f"run {shlex.quote(str(out / 'cfg' / 'gen_flat.cfg'))} {shlex.quote(str(raw))} "
-                    f"\"{common} {trange} -n {scale(args.nflat, a, b)} -s {seed} -f\"")
+                    f"\"{common} {trange} -n {scale(args.nflat, a, b)} -s {seed}\"")
         flat_files.append((raw, -1, a, b))
         seed += 1
 
