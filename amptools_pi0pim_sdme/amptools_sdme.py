@@ -153,6 +153,16 @@ def load_bins(workdir):
     return json.loads(path.read_text())
 
 
+def select_bins(bins, names):
+    """Only the bins named in --bin (all bins without it)."""
+    if not names:
+        return bins
+    unknown = [n for n in names if n not in {b["name"] for b in bins}]
+    if unknown:
+        sys.exit(f"--bin: no bin {' '.join(unknown)} in {BINS_JSON}")
+    return [b for b in bins if b["name"] in names]
+
+
 def parse_orientations(items):
     """['00:0', '45:45', ...] -> [('00', 0), ('45', 45), ...]"""
     out = []
@@ -290,9 +300,22 @@ def fit_jobs(b, args):
     return jobs
 
 
+def set_start_values(cfg, params):
+    """Start values of the SDME parameters in a fit config, from a previous fit."""
+    names = {n for n, _ in SDMES}
+
+    def repl(m):
+        name = m.group(2)
+        if name not in names or name not in params:
+            return m.group(0)
+        return f"{m.group(1)}{params[name]:.6g}"
+
+    return re.sub(r"^(\s*parameter\s+(\w+)\s+)\S+", repl, cfg, flags=re.M)
+
+
 def step_fit(args):
     work = Path(args.workdir)
-    bins = load_bins(work)
+    bins = select_bins(load_bins(work), args.bin)
     args.cfg_text = Path(args.cfg).read_text() if args.cfg else ""
     args.cfg_single_text = Path(args.cfg_single).read_text() if args.cfg_single else ""
     extra = []
@@ -309,6 +332,19 @@ def step_fit(args):
     if args.minos:
         extra.append("-n")
     extra += shlex.split(args.fit_args or "")
+    # single-orientation fits that start from the combined result run once:
+    # randomizing them would throw the start values away
+    start_combined = args.start_from_combined and args.cfg and args.cfg_single
+    extra_single = extra
+    if start_combined:
+        extra_single, skip = [], False
+        for a in extra:
+            if skip:
+                skip = False
+            elif a in ("-r", "-rs"):
+                skip = True
+            else:
+                extra_single.append(a)
     tree = args.tree or "kin"
 
     def fit_one(job):
@@ -320,23 +356,41 @@ def step_fit(args):
         if empty:
             print(f"  - {label}: skipped, no events in {', '.join(empty)}")
             return label, "skipped"
+        opts = extra
+        if start_combined and name != COMBINED:
+            opts = extra_single
+            comb = main_fit_file(work / b["name"] / COMBINED, COMBINED)
+            if comb:
+                cfg = set_start_values(cfg, parse_fit(comb)["params"])
         d.mkdir(parents=True, exist_ok=True)
+        for old in d.glob("*.fit"):
+            old.unlink()                # a failed fit must not leave an old result behind
         (d / "fit.cfg").write_text(cfg)
-        rc = run([args.fit_exe, "-c", "fit.cfg"] + extra, cwd=d,
+        rc = run([args.fit_exe, "-c", "fit.cfg"] + opts, cwd=d,
                  log=d / "fit.log", dry=args.dry_run)
         if rc:
             print(f"  ! {label}: fit exited {rc}, see {d/'fit.log'}")
+        elif not args.dry_run and not main_fit_file(d, name):
+            print(f"  ! {label}: no converged fit (no .fit written), see {d/'fit.log'}")
+            return label, "noconv"
         return label, rc
 
     jobs = [(b, *j) for b in bins for j in fit_jobs(b, args)]
     if not jobs:
         sys.exit("nothing to fit: set cfg and/or cfg_single")
+    # the combined fits first, so the single-orientation fits can start from them
+    phases = ([[j for j in jobs if j[1] == COMBINED], [j for j in jobs if j[1] != COMBINED]]
+              if start_combined else [jobs])
+    results = []
     with ThreadPoolExecutor(max_workers=args.jobs) as pool:
-        results = list(pool.map(fit_one, jobs))
+        for phase in phases:
+            results += list(pool.map(fit_one, phase))
     skipped = [n for n, rc in results if rc == "skipped"]
-    bad = [n for n, rc in results if rc and rc != "skipped"]
-    print(f"Fits done: {len(results) - len(bad) - len(skipped)} ok, {len(bad)} failed"
-          + (f": {', '.join(bad)}" if bad else "")
+    noconv = [n for n, rc in results if rc == "noconv"]
+    bad = [n for n, rc in results if rc and rc not in ("skipped", "noconv")]
+    print(f"Fits done: {len(results) - len(bad) - len(skipped) - len(noconv)} ok, "
+          f"{len(bad)} failed" + (f": {', '.join(bad)}" if bad else "")
+          + (f", {len(noconv)} not converged: {', '.join(noconv)}" if noconv else "")
           + (f", {len(skipped)} skipped (empty bins)" if skipped else ""))
 
 
@@ -451,9 +505,26 @@ def num(v):
     return None if x != x else x
 
 
-def plot_grid(rows, quantities, ncols, out_pdf, args, ylims, ref_lines):
+def read_reference(path):
+    """Reference SDMEs vs -t (CSV: t or t_lo,t_hi, plus SDME columns; '#' lines are
+    comments), with the derived quantities added."""
+    with open(path) as f:
+        lines = [l for l in f if l.strip() and not l.lstrip().startswith("#")]
+    ref = []
+    for r in csv.DictReader(lines):
+        r = {k.strip(): num(v) for k, v in r.items()}
+        if all(r.get(n) is not None for n, _ in SDMES):
+            for name, (const, coef, _) in DERIVED.items():
+                r[name] = const + sum(c * r[k] for k, c in coef.items())
+        ref.append(r)
+    return sorted(ref, key=lambda r: r.get("t") or 0.5 * (r["t_lo"] + r["t_hi"]))
+
+
+def plot_grid(rows, quantities, ncols, out_pdf, args, ylims, ref_lines, reference=None):
     """One page per mass bin (x = -t) or a single page (x = mass, no t bins):
-    a panel per quantity, one series per fit."""
+    a panel per quantity, one series per fit. `reference` (rows of
+    read_reference) is drawn in gray: a box per bin if it has t_lo/t_hi,
+    otherwise a line."""
     import matplotlib
     matplotlib.use("Agg")
     import matplotlib.pyplot as plt
@@ -487,6 +558,15 @@ def plot_grid(rows, quantities, ncols, out_pdf, args, ylims, ref_lines):
                                 xerr=xerr, fmt="o", ms=3, capsize=1.5, lw=1,
                                 color=color, label=name)
                 ax.axhline(0.0, color="#1f3fbf", lw=0.8)
+                rpts = [r for r in (reference or []) if r.get(q) is not None] if use_t else []
+                if rpts and rpts[0].get("t_lo") is not None:
+                    for i, r in enumerate(rpts):
+                        ax.fill_between([r["t_lo"], r["t_hi"]], r[q] - 0.01, r[q] + 0.01,
+                                        color="gray", alpha=0.5, lw=0, zorder=0,
+                                        label=args.reference_label if i == 0 else None)
+                elif rpts:
+                    ax.plot([r["t"] for r in rpts], [r[q] for r in rpts], color="gray",
+                            lw=1.5, marker="s", ms=2.5, zorder=0, label=args.reference_label)
                 if q in ref_lines:
                     ax.axhline(ref_lines[q], color="gray", lw=0.8, ls="--")
                 # the given range, widened when points (with errors) fall outside it
@@ -541,14 +621,16 @@ def step_plot(args):
                                           "rhoU_11", "rhoU_00", "rhoU_1m1", "ReRhoU_10")]
     # every fit, then (<name>_total.pdf) only the combined fit of all orientations
     total = [r for r in rows if r["fit"] == COMBINED]
+    ref = read_reference(args.reference) if args.reference else None
     for sel, suffix in ((rows, ""), (total, "_total")):
         if not sel or (suffix and len(total) == len(rows)):
             continue
-        plot_grid(sel, SDMES, 3, outdir / f"sdmes{suffix}.pdf", args, {"default": y}, {})
+        plot_grid(sel, SDMES, 3, outdir / f"sdmes{suffix}.pdf", args, {"default": y}, {}, ref)
         plot_grid(sel, comps, 4, outdir / f"parity_components{suffix}.pdf", args,
-                  {"default": (-0.2, 0.2), "rhoN_11": (0.3, 0.7)}, SCHC_NPE)
+                  {"default": (-0.2, 0.2), "rhoN_11": (0.3, 0.7)}, SCHC_NPE, ref)
         plot_grid(sel, [(k, DERIVED[k][2]) for k in ("P_sigma", "Sigma")], 2,
-                  outdir / f"asymmetries{suffix}.pdf", args, {"default": (-0.5, 1.5)}, SCHC_NPE)
+                  outdir / f"asymmetries{suffix}.pdf", args, {"default": (-0.5, 1.5)},
+                  SCHC_NPE, ref)
 
 
 # --------------------------------------------------------------------------
@@ -576,7 +658,7 @@ def merge_pdfs(pdfs, out):
 
 def step_plotfit(args):
     work = Path(args.workdir)
-    bins = load_bins(work)
+    bins = select_bins(load_bins(work), args.bin)
     jobs = []
     for b in bins:
         for name in [COMBINED] + [f"pol{s}" for s in b["orientations"]]:
@@ -589,6 +671,9 @@ def step_plotfit(args):
 
     def one(job):
         b, name, d, fitfile = job
+        out = d / "fitplots.pdf"
+        if not args.redo_plots and out.exists() and out.stat().st_mtime >= fitfile.stat().st_mtime:
+            return name, out                     # already made (e.g. by a farm job)
         title = f"{b['name']}/{name}: {b['mass_lo']:.3f} < M < {b['mass_hi']:.3f} GeV"
         if b["t_lo"] is not None:
             title += f", {b['t_lo']:.2f} < -t < {b['t_hi']:.2f}"
@@ -602,7 +687,7 @@ def step_plotfit(args):
 
     with ThreadPoolExecutor(max_workers=args.jobs) as pool:
         done = [r for r in pool.map(one, jobs) if r[1] and r[1].exists()]
-    if args.dry_run or not done:
+    if args.dry_run or not done or args.bin:
         return
     outdir = work / "plots"
     outdir.mkdir(exist_ok=True)
@@ -668,6 +753,14 @@ def build_parser():
     f.add_argument("--hesse", action="store_true", help="fit -H: run HESSE")
     f.add_argument("--minos", action="store_true", help="fit -n: use MINOS")
     f.add_argument("--fit-args", default="", help='any other fit options')
+    f.add_argument("--no-start-from-combined", dest="start_from_combined",
+                   action="store_false",
+                   help="do not start the single-orientation fits from the combined fit "
+                        "result (and do not run them before it)")
+
+    sel = argparse.ArgumentParser(add_help=False)
+    sel.add_argument("--bin", nargs="+", metavar="NAME",
+                     help="only these bins, e.g. bin_m000_t03 (used by the farm jobs)")
 
     g = argparse.ArgumentParser(add_help=False)
 
@@ -675,28 +768,33 @@ def build_parser():
     pl.add_argument("--format", default="pdf", help="pdf, or png etc. for extra image files")
     pl.add_argument("--ylim", type=float, default=0.5, help="SDME plots: y from -YLIM to YLIM")
     pl.add_argument("--fits", nargs="+", help="plot only these fits, e.g. all pol00 pol90")
+    pl.add_argument("--reference", help="CSV of SDMEs vs -t drawn in gray, e.g. published "
+                    "values or the truth.csv of a closure test")
+    pl.add_argument("--reference-label", default="reference", help="legend label of --reference")
 
     pf = argparse.ArgumentParser(add_help=False)
     pf.add_argument("--plotter", default=str(here / "sdme_fit_plotter.py"),
                     help="fit-quality plotter (default: sdme_fit_plotter.py next to this script)")
     pf.add_argument("--no-plotfit", dest="plotfit", action="store_false",
                     help="with 'all': skip the fit-quality plots")
+    pf.add_argument("--redo-plots", action="store_true",
+                    help="remake fitplots.pdf even when it is newer than the .fit file")
 
     subs = {
         "bin": sub.add_parser("bin", parents=[common, b], help="split samples into bins"),
-        "fit": sub.add_parser("fit", parents=[common, f], help="run the fits in each bin"),
+        "fit": sub.add_parser("fit", parents=[common, f, sel], help="run the fits in each bin"),
         "gather": sub.add_parser("gather", parents=[common, g], help="collect results to CSV"),
         "plot": sub.add_parser("plot", parents=[common, pl], help="plot the results"),
-        "plotfit": sub.add_parser("plotfit", parents=[common, pf],
+        "plotfit": sub.add_parser("plotfit", parents=[common, pf, sel],
                                   help="data vs. fit plots for every fit"),
-        "all": sub.add_parser("all", parents=[common, b, f, g, pl, pf],
+        "all": sub.add_parser("all", parents=[common, b, f, g, pl, pf, sel],
                               help="run bin, fit, gather, plot, plotfit"),
     }
     return p, subs
 
 
 # settings whose relative paths are taken relative to the config file
-CONFIG_PATH_KEYS = {"cfg", "cfg_single", "splitter", "plotter"}
+CONFIG_PATH_KEYS = {"cfg", "cfg_single", "splitter", "plotter", "reference"}
 
 
 def config_defaults(path, subparser, all_subparsers):
@@ -727,6 +825,8 @@ def config_defaults(path, subparser, all_subparsers):
     known = {a.dest for sp in all_subparsers.values() for a in sp._actions}
     out = {}
     for section in cp.sections():
+        if section.lower() == "farm":
+            continue                    # job settings, read by submit_sdme_jobs.py
         if section.lower() == "samples":
             out["sample"] = [[f"{tok}={localize(v)}" for tok, v in cp.items(section)]]
             continue
